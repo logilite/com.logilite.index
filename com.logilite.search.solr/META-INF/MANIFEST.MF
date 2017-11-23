@@ -22,5 +22,6 @@ Bundle-ClassPath: .,
  lib/noggit-0.5.jar,
  lib/commons-io-2.4.jar
 Export-Package: com.logilite.search.solr.factoryimpl,
+ org.apache.commons.io,
  org.apache.solr.common
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
