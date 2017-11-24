@@ -14,8 +14,8 @@ package com.logilite.search.solr.factoryimpl;
 
 import java.util.logging.Level;
 
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -34,12 +34,13 @@ public class SolrIndexDataSet implements IndexDataSet {
 	private int maxSolrRow = 0;
 	private SolrDocumentList documentList = null;
 	private SolrQuery solrDataQuery = null;
-	private HttpSolrServer solrServer = null;
+	//private HttpSolrServer solrServer = null;
+	private SolrClient solrServer = null;
 	private SolrDocument solrDoc = null;
 
 	public static CLogger log = CLogger.getCLogger(SolrIndexDataSet.class);
 
-	public SolrIndexDataSet(SolrQuery solrQuery, HttpSolrServer server,
+	public SolrIndexDataSet(SolrQuery solrQuery, SolrClient server,
 			int maxRow) {
 		solrDataQuery = solrQuery;
 		solrServer = server;

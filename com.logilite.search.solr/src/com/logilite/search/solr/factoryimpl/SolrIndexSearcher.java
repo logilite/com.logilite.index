@@ -30,17 +30,17 @@ import org.apache.http.auth.AuthState;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
-import org.apache.http.impl.conn.SchemeRegistryFactory;
-import org.apache.http.protocol.ExecutionContext;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.NoOpResponseParser;
 import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.common.SolrDocument;
@@ -56,11 +56,12 @@ public class SolrIndexSearcher implements IIndexSearcher {
 
 	public static CLogger log = CLogger.getCLogger(SolrIndexSearcher.class);
 
-	@SuppressWarnings("deprecation")
-	private HttpSolrServer server = null;
+	/*@SuppressWarnings("deprecation")*/
+	//private HttpSolrServer server = null;
+	private SolrClient server = null;
 	private MIndexingConfig indexingConfig = null;
 
-	@SuppressWarnings("deprecation")
+	/*@SuppressWarnings("deprecation")*/
 	@Override
 	/**
 	 * 	Initialize solr server
@@ -70,23 +71,41 @@ public class SolrIndexSearcher implements IIndexSearcher {
 
 		try {
 			this.indexingConfig = indexingConfig;
-			PoolingClientConnectionManager cxMgr = new PoolingClientConnectionManager(
+			
+			PoolingHttpClientConnectionManager connManager 
+			  = new PoolingHttpClientConnectionManager();
+			connManager.setMaxTotal(100);
+			connManager.setDefaultMaxPerRoute(20);
+			
+			CredentialsProvider credsProvider = new BasicCredentialsProvider();
+	        credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(indexingConfig
+					.getUserName(), indexingConfig.getPassword()));
+	        
+			HttpClient httpClient = HttpClientBuilder.create()
+					.setConnectionManager(connManager)
+					.setDefaultCredentialsProvider(credsProvider)
+					.addInterceptorFirst(new PreemptiveAuthInterceptor())
+					.build();
+			
+			/*PoolingClientConnectionManager cxMgr = new PoolingClientConnectionManager(
 					SchemeRegistryFactory.createDefault());
 			cxMgr.setMaxTotal(100);
 			cxMgr.setDefaultMaxPerRoute(20);
 
-			DefaultHttpClient httpclient = new DefaultHttpClient(cxMgr);
-			httpclient
+			DefaultHttpClient httpClient = new DefaultHttpClient(cxMgr);
+			
+			
+			httpClient
 					.addRequestInterceptor(new PreemptiveAuthInterceptor(), 0);
-			httpclient.getCredentialsProvider().setCredentials(
+			httpClient.getCredentialsProvider().setCredentials(
 					AuthScope.ANY,
 					new UsernamePasswordCredentials(indexingConfig
-							.getUserName(), indexingConfig.getPassword()));
-
-			server = new HttpSolrServer(indexingConfig.getIndexServerUrl(),
-					httpclient);
-			server.setRequestWriter(new BinaryRequestWriter());
-			server.setAllowCompression(true);
+							.getUserName(), indexingConfig.getPassword()));*/
+			server = new HttpSolrClient.Builder(indexingConfig.getIndexServerUrl()).withHttpClient(httpClient).build();
+		//	server = new HttpSolrServer(indexingConfig.getIndexServerUrl(),
+		//			httpclient);
+		//	server.setRequestWriter(new BinaryRequestWriter());
+		//	server.setAllowCompression(true);
 
 			server.ping();
 
@@ -170,26 +189,27 @@ public class SolrIndexSearcher implements IIndexSearcher {
 
 	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor {
 
-		@SuppressWarnings("deprecation")
+		/*@SuppressWarnings("deprecation")*/
 		public void process(final HttpRequest request, final HttpContext context)
 				throws HttpException, IOException {
 			AuthState authState = (AuthState) context
-					.getAttribute(ClientContext.TARGET_AUTH_STATE);
+					.getAttribute(HttpClientContext.TARGET_AUTH_STATE);
 
 			// If no auth scheme avaialble yet, try to initialize it
 			// preemptively
 			if (authState.getAuthScheme() == null) {
 				CredentialsProvider credsProvider = (CredentialsProvider) context
-						.getAttribute(ClientContext.CREDS_PROVIDER);
+						.getAttribute(HttpClientContext.CREDS_PROVIDER);
 				HttpHost targetHost = (HttpHost) context
-						.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
+						.getAttribute(HttpClientContext.HTTP_TARGET_HOST);
 				Credentials creds = credsProvider.getCredentials(new AuthScope(
 						targetHost.getHostName(), targetHost.getPort()));
 				if (creds == null)
 					throw new HttpException(
 							"No credentials for preemptive authentication");
-				authState.setAuthScheme(new BasicScheme());
-				authState.setCredentials(creds);
+				authState.update(new BasicScheme(), creds);
+				//authState.setAuthScheme(new BasicScheme());
+				//authState.setCredentials(creds);
 			}
 
 		}
@@ -346,7 +366,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 	 * @param List
 	 *            of Parameters
 	 */
-	@SuppressWarnings("null")
+	/*@SuppressWarnings("null")*/
 	@Override
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params) {
 		StringBuffer query = new StringBuffer();
