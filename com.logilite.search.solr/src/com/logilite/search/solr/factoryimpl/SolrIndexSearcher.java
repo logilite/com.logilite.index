@@ -154,7 +154,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 						+ e.getLocalizedMessage());
 			}
 
-			server.deleteByQuery(solrStr + ":" + index_ID);
+			server.deleteByQuery(solrStr  + index_ID);
 			server.commit();
 		} catch (SolrServerException e) {
 			log.log(Level.SEVERE, "Solr server connection failure: ", e);
