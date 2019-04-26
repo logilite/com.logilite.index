@@ -19,23 +19,23 @@ import java.util.Map;
 
 import com.logilite.search.model.MIndexingConfig;
 
-public interface IIndexSearcher {
+public interface IIndexSearcher
+{
 	public void init(MIndexingConfig indexingConfig);
 
 	public void deleteIndexByID(String id, String solrStr);
 
 	public void deleteAllIndex();
-	
+
 	public String searchIndexJson(String queryString);
 
 	public String searchIndexJson(String query, int maxRows);
-	
-	public String searchIndexJson(String queryString, int maxRows,int startFrom );
-	
-	public String searchIndexJson(String queryString, int maxRows,int startFrom ,int fragsize);
+
+	public String searchIndexJson(String queryString, int maxRows, int startFrom);
+
+	public String searchIndexJson(String queryString, int maxRows, int startFrom, int fragsize);
 
 	public void indexContent(Map<String, Object> solrValue);
 
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params);
-
 }

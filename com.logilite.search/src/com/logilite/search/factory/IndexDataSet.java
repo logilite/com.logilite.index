@@ -12,13 +12,13 @@
 
 package com.logilite.search.factory;
 
-public interface IndexDataSet {
-
+public interface IndexDataSet
+{
 	public long getCount();
 
 	public Object next();
 
 	public boolean clear();
 
-	public boolean hasmore();
+	public boolean hasMore();
 }
