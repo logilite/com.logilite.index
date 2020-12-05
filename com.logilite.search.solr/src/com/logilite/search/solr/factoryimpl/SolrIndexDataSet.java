@@ -23,43 +23,47 @@ import org.compiere.util.CLogger;
 
 import com.logilite.search.factory.IndexDataSet;
 
-public class SolrIndexDataSet implements IndexDataSet {
-	//get total count from query result
-	private long totalCount = 0;
-	//Current index is for local iteration
-	private int currentIndex = 0;
-	//Cursor index is for iterate starting to total count
-	private long cursorIndex = 0;
-	//max rows is for get total number of row in one execution 
-	private int maxSolrRow = 0;
-	private SolrDocumentList documentList = null;
-	private SolrQuery solrDataQuery = null;
-	//private HttpSolrServer solrServer = null;
-	private SolrClient solrServer = null;
-	private SolrDocument solrDoc = null;
+public class SolrIndexDataSet implements IndexDataSet
+{
+	public static CLogger		log				= CLogger.getCLogger(SolrIndexDataSet.class);
 
-	public static CLogger log = CLogger.getCLogger(SolrIndexDataSet.class);
+	// get total count from query result
+	private long				totalCount		= 0;
+	// Current index is for local iteration
+	private int					currentIndex	= 0;
+	// Cursor index is for iterate starting to total count
+	private long				cursorIndex		= 0;
+	// max rows is for get total number of row in one execution
+	private int					maxSolrRow		= 0;
 
-	public SolrIndexDataSet(SolrQuery solrQuery, SolrClient server,
-			int maxRow) {
+	private SolrDocumentList	documentList	= null;
+	private SolrQuery			solrDataQuery	= null;
+	private SolrClient			solrServer		= null;
+	private SolrDocument		solrDoc			= null;
+
+	public SolrIndexDataSet(SolrQuery solrQuery, SolrClient server, int maxRow)
+	{
 		solrDataQuery = solrQuery;
 		solrServer = server;
 		maxSolrRow = maxRow;
 	}
 
 	@Override
-	public long getCount() {
+	public long getCount()
+	{
 		return totalCount;
 	}
 
 	@Override
-	public Object next() {
-
+	public Object next()
+	{
 		if (documentList == null)
 			return null;
 
-		if (currentIndex == documentList.size()) {
-			try {
+		if (currentIndex == documentList.size())
+		{
+			try
+			{
 				QueryResponse response = new QueryResponse();
 				solrDataQuery.setRows(maxSolrRow);
 				solrDataQuery.setStart((int) cursorIndex);
@@ -70,20 +74,24 @@ public class SolrIndexDataSet implements IndexDataSet {
 					solrDoc = documentList.get(currentIndex);
 				else
 					solrDoc = null;
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				log.log(Level.SEVERE, "Searching content failure:", e);
 			}
-		} else {
+		}
+		else
+		{
 			solrDoc = documentList.get(currentIndex);
 		}
 		currentIndex++;
 		cursorIndex++;
 		return solrDoc;
-
 	} // next
 
 	@Override
-	public boolean clear() {
+	public boolean clear()
+	{
 		documentList = null;
 		cursorIndex = 0;
 		currentIndex = 0;
@@ -92,24 +100,27 @@ public class SolrIndexDataSet implements IndexDataSet {
 	} // clear
 
 	@Override
-	public boolean hasmore() {
-		if (currentIndex <= documentList.size() && cursorIndex < totalCount) {
-			return true;
-		}
-		return false;
-	} // hasmore
+	public boolean hasMore()
+	{
+		return (currentIndex <= documentList.size() && cursorIndex < totalCount);
+	} // hasMore
 
-	public SolrIndexDataSet execute() {
-		if (solrServer != null) {
+	public SolrIndexDataSet execute()
+	{
+		if (solrServer != null)
+		{
 			QueryResponse response = new QueryResponse();
 
-			try {
+			try
+			{
 				solrDataQuery.setRows(maxSolrRow);
 				response = solrServer.query(solrDataQuery);
 				documentList = response.getResults();
 				totalCount = documentList.getNumFound();
 
-			} catch (Exception e) {
+			}
+			catch (Exception e)
+			{
 				log.log(Level.SEVERE, "Searching content failure:", e);
 			}
 		}
