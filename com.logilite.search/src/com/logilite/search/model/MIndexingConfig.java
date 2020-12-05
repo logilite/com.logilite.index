@@ -31,7 +31,7 @@ public class MIndexingConfig extends X_LTX_Indexing_Conf
 	{
 		super(ctx, rs, trxName);
 	}
-	
+
 	public String getIndexServerUrl()
 	{
 		String url = getURL();

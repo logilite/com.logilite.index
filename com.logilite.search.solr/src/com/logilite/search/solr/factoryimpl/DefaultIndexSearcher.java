@@ -16,13 +16,17 @@ package com.logilite.search.solr.factoryimpl;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.IIndexSearcherFactory;
 
-public class DefaultIndexSearcher implements IIndexSearcherFactory {
+public class DefaultIndexSearcher implements IIndexSearcherFactory
+{
 
 	@Override
-	public IIndexSearcher getIndexSearcher(String indexEngine) {
-		if (indexEngine.equalsIgnoreCase("SOL")) {
+	public IIndexSearcher getIndexSearcher(String indexEngine)
+	{
+		if (indexEngine.equalsIgnoreCase("SOL"))
+		{
 			return new SolrIndexSearcher();
-		} else
+		}
+		else
 			return null;
 	}
 }

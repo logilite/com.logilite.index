@@ -124,7 +124,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 			throw new AdempiereException(
 					"Fail to initialize solr Server OR Invalid Username or Password ");
 		}
-	}
+	} / init
 
 	@Override
 	public void indexContent(Map<String, Object> indexValue) {
@@ -152,13 +152,12 @@ public class SolrIndexSearcher implements IIndexSearcher {
 			throw new AdempiereException("Indexing failure: "
 					+ e.getLocalizedMessage());
 		}
-	}
+	} // indexContent
 
 	/**
 	 * Delete by Id
 	 * 
-	 * @param Solr
-	 *            ID name
+	 * @param Solr ID name
 	 * @param ID
 	 */
 	@Override
@@ -185,7 +184,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 					+ e.getLocalizedMessage());
 		}
 
-	}
+	} // deleteIndexByID
 
 	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor {
 
@@ -212,7 +211,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 				//authState.setCredentials(creds);
 			}
 
-		}
+		} // process
 
 	}
 
@@ -245,59 +244,51 @@ public class SolrIndexSearcher implements IIndexSearcher {
 					+ e.getLocalizedMessage());
 		}
 
-	}
+	} // deleteAllIndex
 
 	/**
 	 * Get json String from Solr
 	 * 
-	 * @param Query
-	 *            String
+	 * @param QueryString
 	 */
 	@Override
 	public String searchIndexJson(String queryString) {
 		int maxRows = MSysConfig.getIntValue("SOLR_MAXROWS", 100);
 		return searchIndexJson(queryString, maxRows);
-	}
+	} // searchIndexJson
 
 	/**
 	 * Get json String from Solr
 	 * 
-	 * @param Query
-	 *            String
-	 * @param max
-	 *            rows allow
+	 * @param queryString
+	 * @param maxRows max rows allow
 	 */
 	@Override
 	public String searchIndexJson(String queryString, int maxRows) {
 		int startFrom = MSysConfig.getIntValue("SOLR_STARTFROM", 0);
 		return searchIndexJson(queryString, maxRows, startFrom);
-	}
+	} // searchIndexJson
 
 	/**
 	 * Get json String from Solr
 	 * 
-	 * @param Query
-	 *            String
-	 * @param max
-	 *            rows allow
-	 * @param Startfrom
+	 * @param queryString
+	 * @param maxRows max rows allow
+	 * @param startFrom
 	 */
 	@Override
 	public String searchIndexJson(String queryString, int maxRows, int startFrom) {
 		int fragsize = MSysConfig.getIntValue("SOLR_FRAGMENTSIZE", 10000);
 		return searchIndexJson(queryString, maxRows, startFrom, fragsize);
-	}
+	} // searchIndexJson
 
 	/**
 	 * Get json String from Solr
 	 * 
-	 * @param Query
-	 *            String
-	 * @param max
-	 *            rows allow
+	* @param queryString
+	 * @param maxRows max rows allow
 	 * @param Startfrom
-	 * @param fragment
-	 *            size
+	 * @param fragment size
 	 */
 	@Override
 	public String searchIndexJson(String queryString, int maxRows,
@@ -337,7 +328,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 					+ e.getLocalizedMessage());
 		}
 		return (String) resp.get("response");
-	}
+	} // searchIndexJson
 
 	/**
 	 * Escape meta characters from query string
@@ -358,7 +349,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 			}
 		}
 		return inputString;
-	}
+	} // escapeMetaCharacters
 
 	/**
 	 * Build Solr serach Query
@@ -405,7 +396,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 			query.append("*:*");
 
 		return query.toString();
-	}
+	} // buildSolrSearchQuery
 
 	/**
 	 * Search for solr Document
@@ -415,7 +406,7 @@ public class SolrIndexSearcher implements IIndexSearcher {
 	public List<SolrDocument> searchIndexDocument(String query) {
 		int maxRow = MSysConfig.getIntValue("SOLR_MAXROWS", 100);
 		return searchIndexDocument(query, maxRow);
-	}
+	} // searchIndexDocument
 
 	/**
 	 * Search for solr Document
@@ -455,5 +446,5 @@ public class SolrIndexSearcher implements IIndexSearcher {
 		}
 
 		return solrDocList;
-	}
+	} // searchIndexDocument
 }

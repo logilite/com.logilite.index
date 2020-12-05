@@ -80,7 +80,7 @@ public class SolrIndexDataSet implements IndexDataSet {
 		cursorIndex++;
 		return solrDoc;
 
-	}
+	} // next
 
 	@Override
 	public boolean clear() {
@@ -89,7 +89,7 @@ public class SolrIndexDataSet implements IndexDataSet {
 		currentIndex = 0;
 		totalCount = 0;
 		return true;
-	}
+	} // clear
 
 	@Override
 	public boolean hasmore() {
@@ -97,9 +97,9 @@ public class SolrIndexDataSet implements IndexDataSet {
 			return true;
 		}
 		return false;
-	}
+	} // hasmore
 
-	public SolrIndexDataSet excute() {
+	public SolrIndexDataSet execute() {
 		if (solrServer != null) {
 			QueryResponse response = new QueryResponse();
 
@@ -114,6 +114,6 @@ public class SolrIndexDataSet implements IndexDataSet {
 			}
 		}
 		return this;
-	}
+	} // execute
 
 }

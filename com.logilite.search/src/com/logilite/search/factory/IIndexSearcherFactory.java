@@ -13,6 +13,7 @@
 
 package com.logilite.search.factory;
 
-public interface IIndexSearcherFactory {
+public interface IIndexSearcherFactory
+{
 	public IIndexSearcher getIndexSearcher(String serverType);
 }
