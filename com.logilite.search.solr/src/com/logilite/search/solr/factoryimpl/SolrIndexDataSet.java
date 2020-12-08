@@ -14,8 +14,8 @@ package com.logilite.search.solr.factoryimpl;
 
 import java.util.logging.Level;
 
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -25,6 +25,8 @@ import com.logilite.search.factory.IndexDataSet;
 
 public class SolrIndexDataSet implements IndexDataSet
 {
+	public static CLogger		log				= CLogger.getCLogger(SolrIndexDataSet.class);
+
 	// get total count from query result
 	private long				totalCount		= 0;
 	// Current index is for local iteration
@@ -33,14 +35,13 @@ public class SolrIndexDataSet implements IndexDataSet
 	private long				cursorIndex		= 0;
 	// max rows is for get total number of row in one execution
 	private int					maxSolrRow		= 0;
+
 	private SolrDocumentList	documentList	= null;
 	private SolrQuery			solrDataQuery	= null;
-	private HttpSolrServer		solrServer		= null;
+	private SolrClient			solrServer		= null;
 	private SolrDocument		solrDoc			= null;
 
-	public static CLogger		log				= CLogger.getCLogger(SolrIndexDataSet.class);
-
-	public SolrIndexDataSet(SolrQuery solrQuery, HttpSolrServer server, int maxRow)
+	public SolrIndexDataSet(SolrQuery solrQuery, SolrClient server, int maxRow)
 	{
 		solrDataQuery = solrQuery;
 		solrServer = server;
@@ -85,7 +86,6 @@ public class SolrIndexDataSet implements IndexDataSet
 		}
 		currentIndex++;
 		cursorIndex++;
-
 		return solrDoc;
 	} // next
 
@@ -96,18 +96,13 @@ public class SolrIndexDataSet implements IndexDataSet
 		cursorIndex = 0;
 		currentIndex = 0;
 		totalCount = 0;
-
 		return true;
 	} // clear
 
 	@Override
 	public boolean hasMore()
 	{
-		if (currentIndex <= documentList.size() && cursorIndex < totalCount)
-		{
-			return true;
-		}
-		return false;
+		return (currentIndex <= documentList.size() && cursorIndex < totalCount);
 	} // hasMore
 
 	public SolrIndexDataSet execute()
@@ -122,6 +117,7 @@ public class SolrIndexDataSet implements IndexDataSet
 				response = solrServer.query(solrDataQuery);
 				documentList = response.getResults();
 				totalCount = documentList.getNumFound();
+
 			}
 			catch (Exception e)
 			{

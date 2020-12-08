@@ -14,6 +14,7 @@
 package com.logilite.search.factory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -21,21 +22,45 @@ import com.logilite.search.model.MIndexingConfig;
 
 public interface IIndexSearcher
 {
+	// Initiate
 	public void init(MIndexingConfig indexingConfig);
 
-	public void deleteIndexByID(String id, String solrStr);
+	public void createFieldTypeInIndexSchema(Map<String, Object> fieldTypeAttribute);
 
+	public void createFieldsInIndexSchema(Map<String, Object> fieldAttribute);
+
+	// Delete
 	public void deleteAllIndex();
+
+	public void deleteIndexByField(String fieldName, String fieldValue);
+
+	public void deleteIndexByQuery(String query);
+
+	// Search
+	public Object searchIndexNoRestriction(String queryString);
 
 	public String searchIndexJson(String queryString);
 
-	public String searchIndexJson(String query, int maxRows);
+	public String searchIndexJson(String queryString, int maxRows);
 
 	public String searchIndexJson(String queryString, int maxRows, int startFrom);
 
 	public String searchIndexJson(String queryString, int maxRows, int startFrom, int fragsize);
 
+	public List<Object> searchIndexDocument(String queryString);
+
+	public List<Object> searchIndexDocument(String queryString, int maxRow);
+
+	// Indexing document
 	public void indexContent(Map<String, Object> solrValue);
 
+	// Miscellaneous
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params);
+
+	public Object getColumnValue(String query, String columnName);
+
+	public HashSet<String> getFieldTypeSet();
+
+	public HashSet<String> getFieldSet();
+
 }
