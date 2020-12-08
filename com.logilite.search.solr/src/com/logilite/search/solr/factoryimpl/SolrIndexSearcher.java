@@ -1,21 +1,26 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
- * you can redistribute it and/or modify it * under the terms version 2 of the
- * GNU General Public License as published * by the Free Software Foundation.
- * This program is distributed in the hope * that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
- * more details. * You should have received a copy of the GNU General Public
- * License along * with this program; if not, write to the Free Software
- * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
 package com.logilite.search.solr.factoryimpl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -37,13 +42,20 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.NoOpResponseParser;
 import org.apache.solr.client.solrj.request.QueryRequest;
+import org.apache.solr.client.solrj.request.schema.FieldTypeDefinition;
+import org.apache.solr.client.solrj.request.schema.SchemaRequest;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.schema.FieldTypeRepresentation;
+import org.apache.solr.client.solrj.response.schema.SchemaResponse;
 import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.compiere.model.MSysConfig;
@@ -54,18 +66,24 @@ import com.logilite.search.model.MIndexingConfig;
 
 public class SolrIndexSearcher implements IIndexSearcher
 {
+	public static CLogger		log							= CLogger.getCLogger(SolrIndexSearcher.class);
 
-	public static CLogger	log				= CLogger.getCLogger(SolrIndexSearcher.class);
+	public static final String	SYSCONFIG_SOLR_MAXROWS		= "SOLR_MAXROWS";
+	public static final String	SYSCONFIG_SOLR_STARTFROM	= "SOLR_STARTFROM";
+	public static final String	SYSCONFIG_SOLR_FRAGMENTSIZE	= "SOLR_FRAGMENTSIZE";
 
-	private SolrClient		server			= null;
-	private MIndexingConfig	indexingConfig	= null;
+	public HashSet<String>		fieldSet					= new HashSet<String>();
+	public HashSet<String>		fieldTypeSet				= new HashSet<String>();
 
-	@Override
+	private SolrClient			server						= null;
+	private MIndexingConfig		indexingConfig				= null;
+
 	/**
 	 * Initialize solr server
 	 * 
 	 * @param MIndexingConfig
 	 */
+	@Override
 	public void init(MIndexingConfig indexingConfig)
 	{
 		try
@@ -90,156 +108,274 @@ public class SolrIndexSearcher implements IIndexSearcher
 																					.build();
 			server.ping();
 
+			//
+			try
+			{
+				// Build Schema Fields Type set
+				buildSolrSchemaFieldTypesSet();
+
+				// Build Schema Fields set
+				buildSolrSchemaFieldsSet();
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "Issue while build/create fieldtype/field in solr schema: ", e.getLocalizedMessage());
+				throw new AdempiereException("Issue while build/create fieldtype/field in solr schema: " + e.getLocalizedMessage(), e);
+			}
 		}
 		catch (SolrServerException e)
 		{
-			log.log(Level.SEVERE, "Solr server is not started ", e);
-			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Solr server is not started: ", e);
+			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
+			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Fail to initialize solr Server OR Invalid Username or Password ", e);
-			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password ");
+			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password.", e);
 		}
 	} // init
 
-	@Override
-	public void indexContent(Map<String, Object> indexValue)
+	/**
+	 * Build Solr schema for Fields
+	 */
+	public void buildSolrSchemaFieldsSet()
+	{
+		final SchemaRequest.Fields fieldsSchemaRequest = new SchemaRequest.Fields();
+		try
+		{
+			SchemaResponse.FieldsResponse fieldsResponse = fieldsSchemaRequest.process(server);
+			List<Map<String, Object>> fields = fieldsResponse.getFields();
+			for (Map<String, Object> map : fields)
+			{
+				fieldSet.add((String) map.get("name"));
+			}
+		}
+		catch (SolrServerException e)
+		{
+			log.log(Level.SEVERE, "Solr server is not started: ", e);
+			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to retried fields set: ", e);
+			throw new AdempiereException("Fail to retried fields set: " + e.getLocalizedMessage(), e);
+		}
+
+	} // buildSolrSchemaFieldsSet
+
+	/**
+	 * Build Solr schema for FieldTypes
+	 */
+	public void buildSolrSchemaFieldTypesSet()
+	{
+		SchemaRequest.FieldTypes fTypes = new SchemaRequest.FieldTypes();
+		try
+		{
+			SchemaResponse.FieldTypesResponse ftRes = fTypes.process(server);
+			List<FieldTypeRepresentation> fieldTypes = ftRes.getFieldTypes();
+			for (FieldTypeRepresentation ftRepr : fieldTypes)
+			{
+				Map<String, Object> ftAttrib = ftRepr.getAttributes();
+				fieldTypeSet.add(ftAttrib.get("name").toString());
+			}
+		}
+		catch (SolrServerException e)
+		{
+			log.log(Level.SEVERE, "Solr server is not started: ", e);
+			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to retried field types: ", e);
+			throw new AdempiereException("Fail to retried field type: " + e.getLocalizedMessage(), e);
+		}
+	} // buildSolrSchemaFieldTypesSet
+
+	/**
+	 * Create FieldType in solr schema
+	 * 
+	 * @param fieldTypeAttribute - new fields type attribute
+	 */
+	public void createFieldTypeInIndexSchema(Map<String, Object> fieldTypeAttribute)
+	{
+		if (fieldTypeAttribute != null && fieldTypeAttribute.size() > 0)
+		{
+			FieldTypeDefinition ftDefinition = new FieldTypeDefinition();
+			ftDefinition.setAttributes(fieldTypeAttribute);
+
+			SchemaRequest.AddFieldType ft = new SchemaRequest.AddFieldType(ftDefinition);
+			try
+			{
+				ft.process(server);
+			}
+			catch (SolrServerException e)
+			{
+				log.log(Level.SEVERE, "Solr server is not started: ", e);
+				throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+			}
+			catch (IOException e)
+			{
+				log.log(Level.SEVERE, "Fail to add field type for : " + fieldTypeAttribute.toString(), e);
+				throw new AdempiereException("Fail to add field type for : " + fieldTypeAttribute.toString() + ", Error: " + e.getLocalizedMessage(), e);
+			}
+
+			//
+			buildSolrSchemaFieldTypesSet();
+		}
+	} // createFieldTypeInIndexSchema
+
+	/**
+	 * Create Field in solr schema
+	 * 
+	 * @param fieldAttribute - new field attribute
+	 */
+	public void createFieldsInIndexSchema(Map<String, Object> fieldAttribute)
+	{
+		if (fieldAttribute.size() > 0)
+		{
+			SchemaRequest.AddField schemaRequest = new SchemaRequest.AddField(fieldAttribute);
+			try
+			{
+				schemaRequest.process(server);
+			}
+			catch (SolrServerException e)
+			{
+				log.log(Level.SEVERE, "Solr server is not started: ", e);
+				throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+			}
+			catch (IOException e)
+			{
+				log.log(Level.SEVERE, "Fail to add field in schema for : " + fieldAttribute.toString(), e);
+				throw new AdempiereException("Fail to add field in schema for : " + fieldAttribute.toString() + ", Error: " + e.getLocalizedMessage(), e);
+			}
+
+			//
+			buildSolrSchemaFieldsSet();
+		}
+	} // createFieldsInIndexSchema
+
+	/**
+	 * Check Server is Up and running
+	 * 
+	 * @throws AdempiereException
+	 */
+	public void checkServerIsUp() throws AdempiereException
 	{
 		try
 		{
-			try
-			{
-				if (server.ping() == null)
-					init(indexingConfig);
-			}
-			catch (SolrServerException | IOException e)
-			{
-				log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-				throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-			}
+			if (server.ping() == null)
+				init(indexingConfig);
+		}
+		catch (SolrServerException | IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
+			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
+		}
+	} // checkServerIsUp
 
-			SolrInputDocument document = new SolrInputDocument();
+	/******************************************************
+	 * Create index from content data
+	 ******************************************************/
+	@Override
+	public void indexContent(Map<String, Object> indexValue)
+	{
+		checkServerIsUp();
 
-			for (Entry<String, Object> row : indexValue.entrySet())
+		SolrInputDocument document = new SolrInputDocument();
+		for (Entry<String, Object> row : indexValue.entrySet())
+		{
+			if (row.getKey() != null && row.getValue() != null)
 			{
-				if (row.getKey() != null && row.getValue() != null)
-				{
-					document.addField(row.getKey(), row.getValue());
-				}
+				document.addField(row.getKey(), row.getValue());
 			}
+		}
+
+		try
+		{
 			server.add(document);
 			server.commit();
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Indexing failure: ", e);
-			throw new AdempiereException("Indexing failure: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Fail to create Indexing: ", e);
+			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
 		}
 	} // indexContent
 
-	/**
-	 * Delete by Id
-	 * 
-	 * @param Solr ID name
-	 * @param ID
-	 */
-	@Override
-	public void deleteIndexByID(String solrStr, String index_ID)
-	{
-		try
-		{
-			try
-			{
-				if (server.ping() == null)
-					init(indexingConfig);
-			}
-			catch (SolrServerException | IOException e)
-			{
-				log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-				throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-			}
-
-			server.deleteByQuery(solrStr + index_ID);
-			server.commit();
-		}
-		catch (SolrServerException e)
-		{
-			log.log(Level.SEVERE, "Solr server connection failure: ", e);
-			throw new AdempiereException("Solr server connection failure:  " + e.getLocalizedMessage());
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Solr Document delete failure: ", e);
-			throw new AdempiereException("Solr Document delete failure:  " + e.getLocalizedMessage());
-		}
-
-	} // deleteIndexByID
-
-	/**
-	 */
-	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor
-	{
-		/**
-		 *
-		 */
-		public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException
-		{
-			AuthState authState = (AuthState) context.getAttribute(HttpClientContext.TARGET_AUTH_STATE);
-
-			// If no auth scheme available yet, try to initialize it preemptively
-			if (authState.getAuthScheme() == null)
-			{
-				CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(HttpClientContext.CREDS_PROVIDER);
-				HttpHost targetHost = (HttpHost) context.getAttribute(HttpClientContext.HTTP_TARGET_HOST);
-				Credentials creds = credsProvider.getCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()));
-				if (creds == null)
-					throw new HttpException("No credentials for preemptive authentication");
-				authState.update(new BasicScheme(), creds);
-			}
-
-		} // process
-	}
-
-	/**
-	 * Delete solr Index
-	 */
+	/******************************************************
+	 * Delete index from indexing server
+	 ******************************************************/
 	@Override
 	public void deleteAllIndex()
 	{
+		deleteIndexByQuery("*:*");
+	} // deleteAllIndex
+
+	@Override
+	public void deleteIndexByField(String fieldName, String fieldValue)
+	{
+		deleteIndexByQuery(fieldName + ":" + fieldValue);
+	} // deleteIndexByField
+
+	@Override
+	public void deleteIndexByQuery(String query)
+	{
+		checkServerIsUp();
+
 		try
 		{
-			try
-			{
-				if (server.ping() == null)
-					init(indexingConfig);
-			}
-			catch (SolrServerException | IOException e)
-			{
-				log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-				throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-			}
-
-			server.deleteByQuery("*:*");
+			server.deleteByQuery(query);
 			server.commit();
 		}
 		catch (SolrServerException e)
 		{
-			log.log(Level.SEVERE, "Solr server connection failure: ", e);
-			throw new AdempiereException("Solr server connection failure:  " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Solr server connection failure, Query=" + query, e);
+			throw new AdempiereException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "Solr Documents delete failure: ", e);
-			throw new AdempiereException("Solr Documents delete failure:  " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Solr document delete failure, Query=" + query, e);
+			throw new AdempiereException("Solr document delete failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+		}
+	} // deleteIndexByQuery
+
+	/******************************************************
+	 * Search content from index based on query definition
+	 ******************************************************/
+	@Override
+	public Object searchIndexNoRestriction(String query)
+	{
+		checkServerIsUp();
+
+		//
+		SolrQuery solrQuery = new SolrQuery(query);
+
+		SolrDocumentList documents = null;
+		try
+		{
+			QueryResponse response = server.query(solrQuery);
+			documents = response.getResults();
+
+			System.out.println("Found " + documents.getNumFound() + " documents");
+		}
+		catch (SolrServerException e)
+		{
+			log.log(Level.SEVERE, "Solr server connection failure, Query=" + query, e);
+			throw new AdempiereException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Solr document searching failed, Query=" + query, e);
+			throw new AdempiereException("Solr document searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 
-	} // deleteAllIndex
+		return documents;
+	}
 
 	/**
 	 * Get json String from Solr
@@ -249,7 +385,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 	@Override
 	public String searchIndexJson(String queryString)
 	{
-		int maxRows = MSysConfig.getIntValue("SOLR_MAXROWS", 100);
+		int maxRows = MSysConfig.getIntValue(SYSCONFIG_SOLR_MAXROWS, 100);
 		return searchIndexJson(queryString, maxRows);
 	} // searchIndexJson
 
@@ -262,7 +398,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 	@Override
 	public String searchIndexJson(String queryString, int maxRows)
 	{
-		int startFrom = MSysConfig.getIntValue("SOLR_STARTFROM", 0);
+		int startFrom = MSysConfig.getIntValue(SYSCONFIG_SOLR_STARTFROM, 0);
 		return searchIndexJson(queryString, maxRows, startFrom);
 	} // searchIndexJson
 
@@ -271,12 +407,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 	 * 
 	 * @param queryString
 	 * @param maxRows     max rows allow
-	 * @param startFrom
+	 * @param startFrom   index start from
 	 */
 	@Override
 	public String searchIndexJson(String queryString, int maxRows, int startFrom)
 	{
-		int fragsize = MSysConfig.getIntValue("SOLR_FRAGMENTSIZE", 10000);
+		int fragsize = MSysConfig.getIntValue(SYSCONFIG_SOLR_FRAGMENTSIZE, 10000);
 		return searchIndexJson(queryString, maxRows, startFrom, fragsize);
 	} // searchIndexJson
 
@@ -285,24 +421,16 @@ public class SolrIndexSearcher implements IIndexSearcher
 	 * 
 	 * @param queryString
 	 * @param maxRows     max rows allow
-	 * @param Startfrom
-	 * @param fragment    size
+	 * @param Startfrom   index start from
+	 * @param fragsize    fragment size
 	 */
 	@Override
 	public String searchIndexJson(String queryString, int maxRows, int startFrom, int fragsize)
 	{
-		queryString = escapeMetaCharacters(queryString);
+		checkServerIsUp();
 
-		try
-		{
-			if (server.ping() == null)
-				init(indexingConfig);
-		}
-		catch (SolrServerException | IOException e)
-		{
-			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-		}
+		//
+		queryString = escapeMetaCharacters(queryString);
 
 		SolrQuery query = new SolrQuery(queryString);
 		query.setRows(maxRows);
@@ -332,6 +460,56 @@ public class SolrIndexSearcher implements IIndexSearcher
 		}
 		return (String) resp.get("response");
 	} // searchIndexJson
+
+	/**
+	 * Get solr document from Solr
+	 * 
+	 * @param  queryString
+	 * @return             List of object as {@link SolrDocument}
+	 */
+	@Override
+	public List<Object> searchIndexDocument(String queryString)
+	{
+		int maxRow = MSysConfig.getIntValue(SYSCONFIG_SOLR_MAXROWS, 100);
+		return searchIndexDocument(queryString, maxRow);
+	} // searchIndexDocument
+
+	/**
+	 * Get solr document from Solr with Max Row
+	 * 
+	 * @param  queryString
+	 * @param  maxRow      rows allow
+	 * @return             List of object as {@link SolrDocument}
+	 */
+	public List<Object> searchIndexDocument(String queryString, int maxRow)
+	{
+		checkServerIsUp();
+
+		//
+		SolrQuery solrQuery = new SolrQuery();
+		solrQuery.setQuery(queryString);
+
+		List<Object> solrDocList = new ArrayList<Object>();
+		SolrIndexDataSet dataset = new SolrIndexDataSet(solrQuery, server, maxRow).execute();
+		try
+		{
+			while (dataset.hasMore())
+			{
+				Object solrDoc = dataset.next();
+				if (solrDoc != null)
+					solrDocList.add((SolrDocument) solrDoc);
+			}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Searching content failure:", e);
+		}
+		finally
+		{
+			dataset.clear();
+		}
+		return solrDocList;
+	} // searchIndexDocument
 
 	/**
 	 * Escape meta characters from query string
@@ -371,18 +549,32 @@ public class SolrIndexSearcher implements IIndexSearcher
 			if (value.size() == 2)
 			{
 				if (value.get(0) instanceof String || value.get(1) instanceof String)
+				{
 					query.append(" AND (").append(key + ":[" + value.get(0) + " TO " + value.get(1) + " ])");
+				} // Handle condition when two boolean value passed.
+				else if (value.get(0) instanceof Boolean || value.get(1) instanceof Boolean)
+				{
+					query.append(" AND (").append(key + ":" + value.get(0) + " OR ").append(key + ":" + value.get(1) + ")");
+				}
 				else if (value.get(1).equals("*"))
+				{
 					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO " + value.get(1) + " ])");
+				}
 				else
+				{
 					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO \"" + value.get(1) + "\" ])");
+				}
 			}
 			else
 			{
 				if (value.get(0) instanceof String)
+				{
 					query.append(" AND (").append(key + ":*" + value.get(0) + "*)");
+				}
 				else
+				{
 					query.append(" AND (").append(key + ":\"" + value.get(0) + "\")");
+				}
 			}
 		}
 
@@ -395,60 +587,85 @@ public class SolrIndexSearcher implements IIndexSearcher
 	} // buildSolrSearchQuery
 
 	/**
-	 * Search for solr Document
-	 * 
-	 * @param query
+	 * @param  query
+	 * @param  columnName
+	 * @return            value of column in index server
 	 */
-	public List<SolrDocument> searchIndexDocument(String query)
+	public String getColumnValue(String query, String columnName)
 	{
-		int maxRow = MSysConfig.getIntValue("SOLR_MAXROWS", 100);
-		return searchIndexDocument(query, maxRow);
-	} // searchIndexDocument
+		checkServerIsUp();
 
-	/**
-	 * Search for solr Document
-	 * 
-	 * @param Query
-	 * @param Max   rows allow
-	 */
-	public List<SolrDocument> searchIndexDocument(String query, int maxRow)
-	{
+		String content = "";
 		try
 		{
-			if (server.ping() == null)
-				init(indexingConfig);
-		}
-		catch (SolrServerException | IOException e)
-		{
-			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-		}
+			SolrQuery solrQuery = new SolrQuery();
+			QueryResponse response = new QueryResponse();
 
-		SolrQuery solrQuery = new SolrQuery();
-		SolrIndexDataSet dataset = null;
-		List<SolrDocument> solrDocList = new ArrayList<SolrDocument>();
-		Object solrDoc = null;
-		try
-		{
 			solrQuery.setQuery(query);
-			dataset = new SolrIndexDataSet(solrQuery, server, maxRow);
-			dataset = dataset.execute();
-			while (dataset.hasMore())
+			response = server.query(solrQuery);
+			SolrDocumentList documentList = response.getResults();
+			ListIterator<SolrDocument> iterator = documentList.listIterator();
+			while (iterator.hasNext())
 			{
-				solrDoc = dataset.next();
-				if (solrDoc != null)
-					solrDocList.add((SolrDocument) solrDoc);
+				SolrDocument document = iterator.next();
+				Map<String, Collection<Object>> searchedContent = document.getFieldValuesMap();
+				Iterator<String> fields = document.getFieldNames().iterator();
+				while (fields.hasNext())
+				{
+					String field = fields.next();
+					if (field.equalsIgnoreCase(columnName))
+					{
+						Collection<Object> values = searchedContent.get(field);
+						Iterator<Object> value = values.iterator();
+
+						while (value.hasNext())
+						{
+							String obj = (String) value.next();
+							content = obj.toString();
+						}
+					}
+				}
 			}
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Searching content failure:", e);
 		}
-		finally
-		{
-			dataset.clear();
-		}
 
-		return solrDocList;
-	} // searchIndexDocument
+		return content;
+	} // getColumnValue
+
+	public HashSet<String> getFieldSet()
+	{
+		return fieldSet;
+	}
+
+	public HashSet<String> getFieldTypeSet()
+	{
+		return fieldTypeSet;
+	}
+
+	/**
+	 * Class PreemptiveAuthInterceptor
+	 */
+	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor
+	{
+		public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException
+		{
+			AuthState authState = (AuthState) context.getAttribute(HttpClientContext.TARGET_AUTH_STATE);
+
+			// If no auth scheme available yet, try to initialize it preemptively
+			if (authState.getAuthScheme() == null)
+			{
+				CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(HttpClientContext.CREDS_PROVIDER);
+				HttpHost targetHost = (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
+				Credentials creds = credsProvider.getCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()));
+				if (creds == null)
+					throw new HttpException("No credentials for preemptive authentication");
+				authState.update(new BasicScheme(), creds);
+			}
+		} // process
+
+	} // PreemptiveAuthInterceptor class
+
 }
