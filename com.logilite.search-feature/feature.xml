@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="com.logilite.search"
+      id="com.logilite.search.feature"
       label="search-feature"
-      version="1.0.1.qualifier"
+      version="7.1.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
