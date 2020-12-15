@@ -60,6 +60,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
@@ -146,6 +147,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 	public void buildSolrSchemaFieldsSet()
 	{
 		final SchemaRequest.Fields fieldsSchemaRequest = new SchemaRequest.Fields();
+		fieldSet.clear();
 		try
 		{
 			SchemaResponse.FieldsResponse fieldsResponse = fieldsSchemaRequest.process(server);
@@ -174,6 +176,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 	public void buildSolrSchemaFieldTypesSet()
 	{
 		SchemaRequest.FieldTypes fTypes = new SchemaRequest.FieldTypes();
+		fieldTypeSet.clear();
 		try
 		{
 			SchemaResponse.FieldTypesResponse ftRes = fTypes.process(server);
@@ -286,12 +289,34 @@ public class SolrIndexSearcher implements IIndexSearcher
 	{
 		checkServerIsUp();
 
+		boolean isReBuildFieldSet = false;
+
 		SolrInputDocument document = new SolrInputDocument();
 		for (Entry<String, Object> row : indexValue.entrySet())
 		{
-			if (row.getKey() != null && row.getValue() != null)
+			Object value = row.getValue();
+			if (row.getKey() != null && value != null)
 			{
-				document.addField(row.getKey(), row.getValue());
+				if (!fieldSet.contains(row.getKey()) && value instanceof String)
+				{
+					// In solr add a new field and having numeric value in string object then solr
+					// side it should create as text_general type field instead of tlongs.
+					String strValue = (String) value;
+					try
+					{
+						strValue = " " + Integer.parseInt(value.toString());
+					}
+					catch (NumberFormatException e)
+					{
+						// Do nothing
+					}
+					document.addField(row.getKey(), strValue);
+					isReBuildFieldSet = true;
+				}
+				else
+				{
+					document.addField(row.getKey(), value);
+				}
 			}
 		}
 
@@ -305,6 +330,9 @@ public class SolrIndexSearcher implements IIndexSearcher
 			log.log(Level.SEVERE, "Fail to create Indexing: ", e);
 			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
 		}
+
+		if (isReBuildFieldSet)
+			buildSolrSchemaFieldsSet();
 	} // indexContent
 
 	/******************************************************
@@ -569,7 +597,10 @@ public class SolrIndexSearcher implements IIndexSearcher
 			{
 				if (value.get(0) instanceof String)
 				{
-					query.append(" AND (").append(key + ":*" + value.get(0) + "*)");
+					if (Util.isEmpty((String) value.get(0), true))
+						query.append(" AND (").append(key + ":*)");
+					else
+						query.append(" AND (").append(key + ":*" + value.get(0) + "*)");
 				}
 				else
 				{
