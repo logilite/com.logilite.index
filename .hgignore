@@ -2,3 +2,5 @@
 syntax: glob
 com.logilite.search.solr/bin/
 com.logilite.search/bin/
+com.logilite.search.solr/target/classes/
+com.logilite.search/target/classes/
