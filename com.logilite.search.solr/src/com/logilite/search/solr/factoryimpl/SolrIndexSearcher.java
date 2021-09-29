@@ -388,8 +388,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 		{
 			QueryResponse response = server.query(solrQuery);
 			documents = response.getResults();
-
-			System.out.println("Found " + documents.getNumFound() + " documents");
 		}
 		catch (SolrServerException e)
 		{
