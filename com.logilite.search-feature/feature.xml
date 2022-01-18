@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.search.feature"
       label="search-feature"
-      version="7.1.0.qualifier"
+      version="9.0.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -18,9 +18,12 @@
    </license>
 
    <requires>
-      <import plugin="org.adempiere.base" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.base" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.plugin.utils" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.osgi" version="3.16.300" match="greaterOrEqual"/>
+      <import plugin="com.logilite.search" version="5.1.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.httpcomponents.httpclient"/>
+      <import plugin="org.apache.httpcomponents.httpcore"/>
    </requires>
 
    <plugin

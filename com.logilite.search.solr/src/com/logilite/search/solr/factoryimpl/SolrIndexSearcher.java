@@ -382,6 +382,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 		//
 		SolrQuery solrQuery = new SolrQuery(query);
+		solrQuery.setRows(Integer.MAX_VALUE);
 
 		SolrDocumentList documents = null;
 		try

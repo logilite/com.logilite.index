@@ -15,7 +15,6 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.compiere.util.CLogger;
-import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
@@ -61,15 +60,15 @@ public class FileContentParsingThroughTika
 			log.log(Level.SEVERE, "Fail to read file: ", e);
 			throw new AdempiereException("Fail to read file: " + e.getLocalizedMessage(), e);
 		}
-		catch (SAXException e)
-		{
-			log.log(Level.SEVERE, "Fail to XML parser: ", e);
-			throw new AdempiereException("Fail to XML parser: " + e.getLocalizedMessage(), e);
-		}
 		catch (TikaException e)
 		{
 			log.log(Level.SEVERE, "Fail to parse file content: ", e);
 			throw new AdempiereException("Fail to parse file content: " + e.getLocalizedMessage(), e);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Fail to parsing file: ", e);
+			throw new AdempiereException("Fail to parsing file: " + e.getLocalizedMessage(), e);
 		}
 	} // getParsedDocumentContent
 
