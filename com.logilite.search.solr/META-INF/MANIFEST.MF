@@ -15,7 +15,7 @@ Bundle-ClassPath: .,
  lib/woodstox-core-asl-4.4.1.jar,
  lib/zookeeper-3.4.10.jar,
  lib/commons-codec-1.6.jar,
- lib/tika-app-1.25.jar
+ lib/tika-app-2.2.1.jar
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
 Export-Package: com.logilite.search.solr.factoryimpl,

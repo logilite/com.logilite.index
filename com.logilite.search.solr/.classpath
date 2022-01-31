@@ -18,6 +18,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/zookeeper-3.4.10.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/solr-solrj-8.7.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-codec-1.6.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/tika-app-1.25.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/tika-app-2.2.1.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
