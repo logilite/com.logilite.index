@@ -574,7 +574,11 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			if (value.size() == 2)
 			{
-				if (value.get(0) instanceof String || value.get(1) instanceof String)
+				if (value.get(0) instanceof String && value.get(1) instanceof Boolean && value.get(1) == Boolean.TRUE)
+				{
+					query.append(" AND (").append(key + ":" + value.get(0) + ")");
+				}
+				else if (value.get(0) instanceof String || value.get(1) instanceof String)
 				{
 					query.append(" AND (").append(key + ":[" + value.get(0) + " TO " + value.get(1) + " ])");
 				} // Handle condition when two boolean value passed.
