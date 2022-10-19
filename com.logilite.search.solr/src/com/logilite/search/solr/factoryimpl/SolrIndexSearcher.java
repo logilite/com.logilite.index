@@ -289,6 +289,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 	{
 		checkServerIsUp();
 
+		log.log(Level.INFO, "Solr index creation value = " + indexValue.toString());
+
 		boolean isReBuildFieldSet = false;
 
 		SolrInputDocument document = new SolrInputDocument();
@@ -322,6 +324,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 		try
 		{
+			log.log(Level.INFO, "Solr index creation value = " + document.toString());
+
 			server.add(document);
 			server.commit();
 		}
@@ -380,13 +384,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 	{
 		checkServerIsUp();
 
-		//
-		SolrQuery solrQuery = new SolrQuery(query);
-		solrQuery.setRows(Integer.MAX_VALUE);
+		log.log(Level.INFO, "Solr search query = " + query);
 
 		SolrDocumentList documents = null;
 		try
 		{
+			SolrQuery solrQuery = new SolrQuery(query);
 			QueryResponse response = server.query(solrQuery);
 			documents = response.getResults();
 		}
@@ -399,6 +402,11 @@ public class SolrIndexSearcher implements IIndexSearcher
 		{
 			log.log(Level.SEVERE, "Solr document searching failed, Query=" + query, e);
 			throw new AdempiereException("Solr document searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Solr searching failed, Query=" + query, e);
+			throw new AdempiereException("Solr searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 
 		return documents;
@@ -458,6 +466,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 		//
 		queryString = escapeMetaCharacters(queryString);
+		log.log(Level.INFO, "Solr search json = " + queryString);
 
 		SolrQuery query = new SolrQuery(queryString);
 		query.setRows(maxRows);
@@ -473,6 +482,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		NamedList<Object> resp = null;
 		try
 		{
+			log.log(Level.INFO, "Solr search json QueryRequest = " + req.toString());
 			resp = server.request(req);
 		}
 		catch (SolrServerException e)
@@ -511,6 +521,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 	public List<Object> searchIndexDocument(String queryString, int maxRow)
 	{
 		checkServerIsUp();
+
+		log.log(Level.INFO, "Solr search document = " + queryString);
 
 		//
 		SolrQuery solrQuery = new SolrQuery();
@@ -575,7 +587,11 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			if (value.size() == 2)
 			{
-				if (value.get(0) instanceof String || value.get(1) instanceof String)
+				if (value.get(0) instanceof String && value.get(1) instanceof Boolean && value.get(1) == Boolean.TRUE)
+				{
+					query.append(" AND (").append(key + ":" + value.get(0) + ")");
+				}
+				else if (value.get(0) instanceof String || value.get(1) instanceof String)
 				{
 					query.append(" AND (").append(key + ":[" + value.get(0) + " TO " + value.get(1) + " ])");
 				} // Handle condition when two boolean value passed.
