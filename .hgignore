@@ -4,3 +4,7 @@ com.logilite.search.solr/bin/
 com.logilite.search/bin/
 com.logilite.search.solr/target/classes/
 com.logilite.search/target/classes/
+com.logilite.search-feature/target/*
+com.logilite.search.p2/target/*
+com.logilite.search.solr/target/*
+com.logilite.search/target/*

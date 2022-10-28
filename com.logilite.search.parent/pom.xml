@@ -2,18 +2,18 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.logilite.search</groupId>
   <artifactId>com.logilite.search.parent</artifactId>
-  <version>7.1.0-SNAPSHOT</version>
+  <version>9.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <local.maven>${user.home}/.m2</local.maven>
-    <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_7_1/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
+    <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
     <maven.dependency.version>3.1.1</maven.dependency.version>
-    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/7.1.0-SNAPSHOT/org.idempiere.p2-7.1.0-SNAPSHOT.zip!/</local.idempiere>
+    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/9.0.0-SNAPSHOT/org.idempiere.p2-9.0.0-SNAPSHOT.zip!/</local.idempiere>
     <idempiere.repo>${jenkins.idempiere}</idempiere.repo>
     <download.maven.version>1.4.1</download.maven.version>
     <tycho.version>1.5.0</tycho.version>
-    <idempiere.repo-id>iDempiere71</idempiere.repo-id>
+    <idempiere.repo-id>iDempiere9</idempiere.repo-id>
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
   </properties>
