@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.logilite.search</groupId>
     <artifactId>com.logilite.search.parent</artifactId>
-    <version>9.0.0-SNAPSHOT</version>
+    <version>${revision}</version>
     <relativePath>../com.logilite.search.parent/pom.xml</relativePath>
   </parent>
   <artifactId>com.logilite.search.solr</artifactId>
