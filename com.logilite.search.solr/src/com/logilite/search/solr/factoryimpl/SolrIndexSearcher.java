@@ -390,6 +390,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		try
 		{
 			SolrQuery solrQuery = new SolrQuery(query);
+			solrQuery.setRows(Integer.MAX_VALUE);
 			QueryResponse response = server.query(solrQuery);
 			documents = response.getResults();
 		}
