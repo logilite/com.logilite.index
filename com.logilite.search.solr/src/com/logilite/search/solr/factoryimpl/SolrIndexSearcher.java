@@ -13,6 +13,7 @@
 
 package com.logilite.search.solr.factoryimpl;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,6 +65,7 @@ import org.compiere.util.Util;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
+import com.logilite.search.solr.tika.FileContentParsingThroughTika;
 
 public class SolrIndexSearcher implements IIndexSearcher
 {
@@ -714,5 +716,42 @@ public class SolrIndexSearcher implements IIndexSearcher
 		} // process
 
 	} // PreemptiveAuthInterceptor class
+
+	/**
+	 * File content parsing through Apache Tika
+	 */
+
+	public String getParseDocumentContent(File file)
+	{
+	  return new FileContentParsingThroughTika(file).getParsedDocumentContent();
+	} // getParseDocumentContent
+
+	/**
+	 * From query to search result based on field name
+	 * 
+	 * @param  query
+	 * @param  searchFieldName
+	 * @return                 search result as list of int values
+	 */
+	public HashSet<Integer> searchIndex(String query, String searchFieldName)
+	{
+		Object docList = searchIndexNoRestriction(query);
+
+		HashSet<Integer> set = new HashSet<Integer>();
+		if (docList != null && docList instanceof SolrDocumentList)
+		{
+			for (int i = 0; i < ((SolrDocumentList) docList).size(); i++)
+			{
+				SolrDocument solrDocument = ((SolrDocumentList) docList).get(i);
+				ArrayList<?> valueIDs = (ArrayList<?>) solrDocument.getFieldValue(searchFieldName);
+				if (valueIDs != null && valueIDs.size() > 0)
+				{
+					int valueID = ((Long) valueIDs.get(0)).intValue();
+					set.add(valueID);
+				}
+			}
+		}
+		return set;
+	} // searchIndex
 
 }

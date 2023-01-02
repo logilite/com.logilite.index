@@ -13,6 +13,7 @@
 
 package com.logilite.search.factory;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,5 +63,9 @@ public interface IIndexSearcher
 	public HashSet<String> getFieldTypeSet();
 
 	public HashSet<String> getFieldSet();
+
+	public String getParseDocumentContent(File file);
+
+	public HashSet<Integer> searchIndex(String query, String searchFieldName);
 
 }
