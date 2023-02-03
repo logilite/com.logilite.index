@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.search.feature"
       label="search-feature"
-      version="7.1.0.qualifier"
+      version="7.2.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -32,6 +32,13 @@
 
    <plugin
          id="com.logilite.search.solr"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.search.solr_lib"
          download-size="0"
          install-size="0"
          version="0.0.0"
