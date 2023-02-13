@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SearchSolrLib
-Bundle-SymbolicName: com.logilite.search.solr_lib;singleton:=true
+Bundle-SymbolicName: com.logilite.search.solrlib;singleton:=true
 Bundle-Version: 7.2.0.qualifier
-Bundle-Activator: com.logilite.search.solr_lib.Activator
+Bundle-Activator: com.logilite.search.solrlib.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: com.logilite.search.solr.lib

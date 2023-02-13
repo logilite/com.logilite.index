@@ -11,7 +11,7 @@ Require-Bundle: org.adempiere.base;bundle-version="5.1.0",
  com.logilite.search;bundle-version="5.1.0",
  org.adempiere.plugin.utils;bundle-version="5.1.0",
  org.eclipse.osgi;bundle-version="3.12.100",
- com.logilite.search.solr_lib;bundle-version="7.1.0"
+ com.logilite.search.solrlib;bundle-version="7.2.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: com.logilite.search.solr

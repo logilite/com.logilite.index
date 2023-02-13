@@ -1,4 +1,4 @@
-package com.logilite.search.solr_lib;
+package com.logilite.search.solrlib;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;

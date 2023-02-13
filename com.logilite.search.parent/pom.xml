@@ -9,8 +9,9 @@
     <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_7_1/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
     <maven.dependency.version>3.1.1</maven.dependency.version>
-    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/7.1.0-SNAPSHOT/org.idempiere.p2-7.1.0-SNAPSHOT.zip!/</local.idempiere>
-    <idempiere.repo>${jenkins.idempiere}</idempiere.repo>
+    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/7.2.0-SNAPSHOT/org.idempiere.p2-7.2.0-SNAPSHOT.zip!/</local.idempiere>
+    <local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/IDM_LT-7.1/org.idempiere.p2/target/repository/</local.idempiere.sb>
+    <idempiere.repo>${local.idempiere.sb}</idempiere.repo>
     <download.maven.version>1.4.1</download.maven.version>
     <tycho.version>1.5.0</tycho.version>
     <idempiere.repo-id>iDempiere71</idempiere.repo-id>
