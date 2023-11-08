@@ -2,6 +2,7 @@ package com.logilite.search.elastic.factory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,13 +16,16 @@ import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.compiere.util.CLogger;
 import org.elasticsearch.client.RestClient;
+import org.json.JSONObject;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
@@ -164,58 +168,27 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	}
 
 	@Override
-	public void indexContent(Map<String, Object> solrValue)
+	public void indexContent(Map<String, Object> indexData)
 	{
+		JSONObject jsonObject = new JSONObject(indexData);
+		String orgJsonData = jsonObject.toString();
 
-		String json = "{\n" +
-						"  \"mappings\": {\n" +
-						"    \"properties\": {\n" +
-						"      \"myfield\": {\n" +
-						"        \"type\": \"text\"\n" +
-						"      }\n" +
-						"    }\n" +
-						"  },\n" +
-						"  \"settings\": {\n" +
-						"    \"index\": {\n" +
-						"      \"max_result_window\": 1000000,\n" +
-						"      \"mapping\": {\n" +
-						"        \"nested_objects\": {\n" +
-						"          \"limit\": 10000\n" +
-						"        }\n" +
-						"      },\n" +
-						"      \"requests\": {\n" +
-						"        \"cache\": {\n" +
-						"          \"enable\": true\n" +
-						"        }\n" +
-						"      }\n" +
-						"    }\n" +
-						"  }\n" +
-						"}";
-
-		CreateIndexRequest request = CreateIndexRequest.of(r -> r
-																	.index("i0295")
-																	.withJson(new StringReader(json)));
-
-		CreateIndexRequest req = CreateIndexRequest.of(r -> r
-																.index(indexingConfig.getLTX_Indexing_Core())
-																.withJson(new StringReader(json)));
-		// CreateIndexRequest req = new CreateIndexRequest ;
+		System.out.println(orgJsonData);
 
 		try
 		{
-			esClient.index(i -> i
-									.index("search-elastic-core")
-									.id("1")
-									.document("bk-1"));
+			Reader input = new StringReader(orgJsonData.replace('\'', '"'));
+			IndexRequest<JsonData> req = IndexRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
+																.withJson(input));
+			IndexResponse response = esClient.index(req);
 
-			// esClient.indices().create(req);
+			System.out.println("result : " + response);
 		}
 		catch (co.elastic.clients.elasticsearch._types.ElasticsearchException | IOException e)
 		{
 			System.out.println(e.getLocalizedMessage());
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override

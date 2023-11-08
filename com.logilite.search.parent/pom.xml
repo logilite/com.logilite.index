@@ -10,7 +10,7 @@
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
     <maven.dependency.version>3.1.1</maven.dependency.version>
     <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/7.2.0-SNAPSHOT/org.idempiere.p2-7.2.0-SNAPSHOT.zip!/</local.idempiere>
-    <local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/IDM_LT-7.1/org.idempiere.p2/target/repository/</local.idempiere.sb>
+    <local.idempiere.sb>file:///D:/Sachin/Work/iDempiere/IDM_LT_7.1/org.idempiere.p2/target/repository/</local.idempiere.sb>
     <idempiere.repo>${local.idempiere.sb}</idempiere.repo>
     <download.maven.version>1.4.1</download.maven.version>
     <tycho.version>1.5.0</tycho.version>
