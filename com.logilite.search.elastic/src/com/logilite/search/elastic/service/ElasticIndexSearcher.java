@@ -1,10 +1,9 @@
-package com.logilite.search.elastic.factory;
+package com.logilite.search.elastic.service;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -170,10 +169,15 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void indexContent(Map<String, Object> indexData)
 	{
+		checkServerIsUp();
+
+		log.log(Level.INFO, "Elastic index creation value = " + indexData.toString());
+
+		// Map data convert to JSon format
 		JSONObject jsonObject = new JSONObject(indexData);
 		String orgJsonData = jsonObject.toString();
 
-		System.out.println(orgJsonData);
+		// System.out.println(orgJsonData);
 
 		try
 		{
@@ -182,19 +186,14 @@ public class ElasticIndexSearcher implements IIndexSearcher
 																.withJson(input));
 			IndexResponse response = esClient.index(req);
 
-			System.out.println("result : " + response);
+			// System.out.println("result : " + response);
 		}
 		catch (co.elastic.clients.elasticsearch._types.ElasticsearchException | IOException e)
 		{
-			System.out.println(e.getLocalizedMessage());
-			e.printStackTrace();
-		}
-	}
+			log.log(Level.SEVERE, "Fail to create Indexing: ", e);
+			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
 
-	@Override
-	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
-	{
-		return null;
+		}
 	}
 
 	@Override

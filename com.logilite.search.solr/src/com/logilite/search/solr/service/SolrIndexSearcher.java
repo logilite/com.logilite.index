@@ -11,13 +11,12 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package com.logilite.search.solr.factoryimpl;
+package com.logilite.search.solr.service;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -61,7 +60,6 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
-import org.compiere.util.Util;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
@@ -574,68 +572,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 	} // escapeMetaCharacters
 
 	/**
-	 * Build Solr search Query
-	 * 
-	 * @param List of Parameters
-	 */
-	@Override
-	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
-	{
-		StringBuffer query = new StringBuffer();
-
-		for (Entry<String, List<Object>> row : params.entrySet())
-		{
-			String key = row.getKey();
-			List<Object> value = row.getValue();
-
-			if (value.size() == 2)
-			{
-				if (value.get(0) instanceof String && value.get(1) instanceof Boolean && value.get(1) == Boolean.TRUE)
-				{
-					query.append(" AND (").append(key + ":" + value.get(0) + ")");
-				}
-				else if (value.get(0) instanceof String || value.get(1) instanceof String)
-				{
-					query.append(" AND (").append(key + ":[" + value.get(0) + " TO " + value.get(1) + " ])");
-				} // Handle condition when two boolean value passed.
-				else if (value.get(0) instanceof Boolean || value.get(1) instanceof Boolean)
-				{
-					query.append(" AND (").append(key + ":" + value.get(0) + " OR ").append(key + ":" + value.get(1) + ")");
-				}
-				else if (value.get(1).equals("*"))
-				{
-					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO " + value.get(1) + " ])");
-				}
-				else
-				{
-					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO \"" + value.get(1) + "\" ])");
-				}
-			}
-			else
-			{
-				if (value.get(0) instanceof String)
-				{
-					if (Util.isEmpty((String) value.get(0), true))
-						query.append(" AND (").append(key + ":*)");
-					else
-						query.append(" AND (").append(key + ":*" + value.get(0) + "*)");
-				}
-				else
-				{
-					query.append(" AND (").append(key + ":\"" + value.get(0) + "\")");
-				}
-			}
-		}
-
-		if (query.length() > 0)
-			query.delete(0, 5);
-		else
-			query.append("*:*");
-
-		return query.toString();
-	} // buildSolrSearchQuery
-
-	/**
 	 * @param  query
 	 * @param  columnName
 	 * @return            value of column in index server
@@ -723,7 +659,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 	public String getParseDocumentContent(File file)
 	{
-	  return new FileContentParsingThroughTika(file).getParsedDocumentContent();
+		return new FileContentParsingThroughTika(file).getParsedDocumentContent();
 	} // getParseDocumentContent
 
 	/**

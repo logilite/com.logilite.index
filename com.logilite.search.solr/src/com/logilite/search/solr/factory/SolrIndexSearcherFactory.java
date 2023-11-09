@@ -11,12 +11,13 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package com.logilite.search.solr.factoryimpl;
+package com.logilite.search.solr.factory;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.IIndexSearcherFactory;
+import com.logilite.search.solr.service.SolrIndexSearcher;
 
-public class DefaultIndexSearcher implements IIndexSearcherFactory
+public class SolrIndexSearcherFactory implements IIndexSearcherFactory
 {
 
 	@Override

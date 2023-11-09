@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="com.logilite.search.elastic.factory.ElasticIndexSearcherFactory">
    <implementation class="com.logilite.search.elastic.factory.ElasticIndexSearcherFactory"/>
-   <property name="service.ranking" type="Integer" value="6"/>
+   <property name="service.ranking" type="Integer" value="5"/>
    <service>
       <provide interface="com.logilite.search.factory.IIndexSearcherFactory"/>
    </service>

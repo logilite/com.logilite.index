@@ -1,5 +1,6 @@
 package com.logilite.search.elastic.factory;
 
+import com.logilite.search.elastic.service.ElasticIndexSearcher;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.IIndexSearcherFactory;
 

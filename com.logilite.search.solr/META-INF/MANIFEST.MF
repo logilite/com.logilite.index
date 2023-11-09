@@ -5,7 +5,7 @@ Bundle-SymbolicName: com.logilite.search.solr;singleton:=true
 Bundle-Version: 7.2.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
-Export-Package: com.logilite.search.solr.factoryimpl,
+Export-Package: com.logilite.search.solr.factory,
  com.logilite.search.solr.tika
 Require-Bundle: org.adempiere.base;bundle-version="5.1.0",
  com.logilite.search;bundle-version="5.1.0",
