@@ -15,15 +15,16 @@ package com.logilite.search.solr.factory;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.IIndexSearcherFactory;
+import com.logilite.search.model.MIndexingConfig;
 import com.logilite.search.solr.service.SolrIndexSearcher;
 
 public class SolrIndexSearcherFactory implements IIndexSearcherFactory
 {
 
 	@Override
-	public IIndexSearcher getIndexSearcher(String indexEngine)
+	public IIndexSearcher getIndexSearcher(String indexingType)
 	{
-		if (indexEngine.equalsIgnoreCase("SOL"))
+		if (MIndexingConfig.LTX_INDEXING_TYPE_Solr.equalsIgnoreCase(indexingType))
 		{
 			return new SolrIndexSearcher();
 		}

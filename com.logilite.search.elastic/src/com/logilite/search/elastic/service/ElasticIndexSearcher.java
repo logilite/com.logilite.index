@@ -30,6 +30,11 @@ import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 
+/**
+ * Elastic Index Searcher
+ * 
+ * @author Sachin Bhimani
+ */
 public class ElasticIndexSearcher implements IIndexSearcher
 {
 

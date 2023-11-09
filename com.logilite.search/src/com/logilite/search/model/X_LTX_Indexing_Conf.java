@@ -23,14 +23,14 @@ import org.compiere.model.*;
 
 /** Generated Model for LTX_Indexing_Conf
  *  @author iDempiere (generated) 
- *  @version Release 2.1 - $Id$ */
+ *  @version Release 7.1 - $Id$ */
 public class X_LTX_Indexing_Conf extends PO implements I_LTX_Indexing_Conf, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20160607L;
+	private static final long serialVersionUID = 20231109L;
 
     /** Standard Constructor */
     public X_LTX_Indexing_Conf (Properties ctx, int LTX_Indexing_Conf_ID, String trxName)
@@ -110,6 +110,8 @@ public class X_LTX_Indexing_Conf extends PO implements I_LTX_Indexing_Conf, I_Pe
 	public static final String LTX_INDEXING_TYPE_Lucene = "LUC";
 	/** Solr = SOL */
 	public static final String LTX_INDEXING_TYPE_Solr = "SOL";
+	/** Elastic = ELS */
+	public static final String LTX_INDEXING_TYPE_Elastic = "ELS";
 	/** Set Indexing Type.
 		@param LTX_Indexing_Type Indexing Type	  */
 	public void setLTX_Indexing_Type (String LTX_Indexing_Type)
