@@ -19,6 +19,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.elasticsearch.client.RestClient;
 import org.json.JSONObject;
@@ -51,7 +52,12 @@ public class ElasticIndexSearcher implements IIndexSearcher
 
 	public static CLogger					log							= CLogger.getCLogger(ElasticIndexSearcher.class);
 
+	public static final String				SYSCONFIG_SOLR_MAXROWS		= "SOLR_MAXROWS";
+	public static final String				SYSCONFIG_SOLR_STARTFROM	= "SOLR_STARTFROM";
+	public static final String				SYSCONFIG_SOLR_FRAGMENTSIZE	= "SOLR_FRAGMENTSIZE";
+
 	public static final SimpleDateFormat	SDF_DATE_FORMAT_WITH_TIME	= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
 	//
 	private MIndexingConfig					indexingConfig				= null;
 	//
@@ -118,6 +124,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void deleteAllIndex()
 	{
+		// TODO Next Phase
 		// TODO _all OR * as query call
 		// deleteIndexByQuery("\"DMS_Content_ID\"=1000021");
 	}
@@ -125,7 +132,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void deleteIndexByField(String fieldName, String fieldValue)
 	{
-		deleteIndexByQuery("\"+fieldName +\" =" + fieldValue);
+		deleteIndexByQuery("\"" + fieldName + "\" =" + fieldValue);
 	} // deleteIndexByField
 
 	@Override
@@ -135,12 +142,9 @@ public class ElasticIndexSearcher implements IIndexSearcher
 
 		checkServerIsUp();
 
-		String select = "SELECT * FROM \"" + indexingConfig.getLTX_Indexing_Core() + "\" WHERE ";
 		try
 		{
-			TranslateResponse translateResponse = esClient	.sql()
-															.translate(tr -> tr.query(select + query));
-
+			TranslateResponse translateResponse = translateQueryToELJson(query);
 			DeleteByQueryRequest req = DeleteByQueryRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
 																		.query(translateResponse.query()));
 			DeleteByQueryResponse response = esClient.deleteByQuery(req);
@@ -163,33 +167,19 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		List<Hit<Object>> hits = new ArrayList<Hit<Object>>();
 		try
 		{
-			// String queryString1 = " \"DMS_Content_ID\"=1000018 OR \"DMS_Content_ID\"=1000018 OR
-			// \"DMS_Content_ID\"=1000021 ";
-			// " \"Show_InActive\"=false AND \"AD_Client_ID\"=11 AND \"DMS_Content_ID\" IN (1000021
-			// , 1000020, 1000018) AND \"Show_InActive\"=false "));
-
-			String selectString = "SELECT * FROM \"" + indexingConfig.getLTX_Indexing_Core() + "\" WHERE ";
-
-			TranslateResponse translateResponse = esClient	.sql()
-															.translate(tr -> tr.query(selectString + queryString));
-
+			TranslateResponse translateResponse = translateQueryToELJson(queryString);
 			SearchResponse<Object> response = esClient.search(	sr -> sr
 																		.index(indexingConfig.getLTX_Indexing_Core())
 																		.query(translateResponse.query())
 																		.size(translateResponse.size().intValue()),
 																Object.class);
 
-			System.out.println(	"Query =>> "	+ translateResponse.query()
-								+ "\n response =>> " + response);
+			log.log(Level.INFO, "Elastic search translate query = " + translateResponse.query() + ", Response =>> " + response);
 			hits = response.hits().hits();
 		}
-		catch (ElasticsearchException e1)
+		catch (ElasticsearchException | IOException e)
 		{
-			e1.printStackTrace();
-		}
-		catch (IOException e1)
-		{
-			e1.printStackTrace();
+			log.log(Level.SEVERE, "Fail to search index by query, Error: " + e.getLocalizedMessage(), e);
 		}
 
 		// Below code working fine
@@ -227,48 +217,51 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public String searchIndexJson(String queryString)
 	{
-		return null;
+		int maxRows = MSysConfig.getIntValue(SYSCONFIG_SOLR_MAXROWS, 100);
+		return searchIndexJson(queryString, maxRows);
 	}
 
 	@Override
-	public String searchIndexJson(String queryString, int maxRows)
+	public String searchIndexJson(String query, int maxRows)
 	{
-		System.out.println("Search queryString= " + queryString);
-		searchIndexNoRestriction(queryString);
-
-		// SearchResponse<?> searchResponse = esClient.search(s -> s
-		// .index(indexingConfig.getLTX_Indexing_Core())
-		// .query(q -> q
-		// .match(t -> t.withJson(queryString))
-		//// .field("fullName")
-		//// .query(queryString)))
-		// , Void.class);
-		//
-		// List<Hit<Void>> hits = searchResponse.hits().hits();
-		return null;
+		int startFrom = MSysConfig.getIntValue(SYSCONFIG_SOLR_STARTFROM, 0);
+		return searchIndexJson(query, maxRows, startFrom);
 	}
 
 	@Override
-	public String searchIndexJson(String queryString, int maxRows, int startFrom)
+	public String searchIndexJson(String query, int maxRows, int startFrom)
 	{
-		return null;
+		int fragsize = MSysConfig.getIntValue(SYSCONFIG_SOLR_FRAGMENTSIZE, 10000);
+		return searchIndexJson(query, maxRows, startFrom, fragsize);
 	}
 
 	@Override
-	public String searchIndexJson(String queryString, int maxRows, int startFrom, int fragsize)
+	public String searchIndexJson(String query, int maxRows, int startFrom, int fragsize)
 	{
+		// TODO Next Phase
+
+		@SuppressWarnings("unchecked")
+		List<Hit<Object>> hits = (List<Hit<Object>>) searchIndexNoRestriction(query);
+		for (int i = 0; i < hits.size(); i++)
+		{
+			Hit<Object> hit = hits.get(i);
+			@SuppressWarnings("unused")
+			LinkedHashMap<?, ?> map = (LinkedHashMap<?, ?>) hit.source();
+		}
 		return null;
 	}
 
 	@Override
 	public List<Object> searchIndexDocument(String queryString)
 	{
-		return null;
+		int maxRow = MSysConfig.getIntValue(SYSCONFIG_SOLR_MAXROWS, 100);
+		return searchIndexDocument(queryString, maxRow);
 	}
 
 	@Override
 	public List<Object> searchIndexDocument(String queryString, int maxRow)
 	{
+		// TODO Next Phase
 		return null;
 	}
 
@@ -309,8 +302,15 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public Object getColumnValue(String query, String columnName)
 	{
-		return null;
-	}
+		@SuppressWarnings("unchecked")
+		List<Hit<Object>> hits = (List<Hit<Object>>) searchIndexNoRestriction(query);
+		for (int i = 0; i < hits.size();)
+		{
+			Hit<Object> hit = hits.get(i);
+			return (String) ((LinkedHashMap<?, ?>) hit.source()).get(columnName);
+		}
+		return "";
+	} // getColumnValue
 
 	@Override
 	public HashSet<String> getFieldTypeSet()
@@ -327,6 +327,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public String getParseDocumentContent(File file)
 	{
+		// TODO Next Phase
 		return null;
 	}
 
@@ -345,4 +346,18 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		}
 		return set;
 	} // searchIndex
+
+	/**
+	 * Translates SQL into Elasticsearch queries
+	 * 
+	 * @param  query
+	 * @return
+	 * @throws IOException
+	 */
+	private TranslateResponse translateQueryToELJson(String query) throws IOException
+	{
+		String select = "SELECT * FROM \"" + indexingConfig.getLTX_Indexing_Core() + "\" WHERE ";
+		TranslateResponse translateResponse = esClient.sql().translate(tr -> tr.query(select + query));
+		return translateResponse;
+	} // translateQueryToELJson
 }
