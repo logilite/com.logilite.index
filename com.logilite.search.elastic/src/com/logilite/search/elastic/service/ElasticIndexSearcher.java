@@ -4,11 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -43,10 +47,13 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 public class ElasticIndexSearcher implements IIndexSearcher
 {
 
-	public static CLogger		log				= CLogger.getCLogger(ElasticIndexSearcher.class);
+	public static CLogger					log							= CLogger.getCLogger(ElasticIndexSearcher.class);
 
-	private MIndexingConfig		indexingConfig	= null;
-	private ElasticsearchClient	esClient		= null;
+	public static final SimpleDateFormat	SDF_DATE_FORMAT_WITH_TIME	= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+	private MIndexingConfig					indexingConfig				= null;
+
+	private ElasticsearchClient				esClient					= null;
 
 	@Override
 	public void init(MIndexingConfig indexingConfig)
@@ -62,7 +69,8 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		// new UsernamePasswordCredentials("elastic", "Logilite@803"));
 
 		RestClient restClient = RestClient	.builder(HttpHost.create(serverUrl))
-											.setDefaultHeaders(new Header[] { new BasicHeader("Authorization", "ApiKey " + apiKey) }).build();
+											.setDefaultHeaders(new Header[] { new BasicHeader("Authorization", "ApiKey " + apiKey) })
+											.build();
 
 		ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
 		esClient = new ElasticsearchClient(transport);
@@ -119,6 +127,8 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void deleteAllIndex()
 	{
+		// DeleteByQueryRequest
+		// DeleteByQueryRequest req = DeleteByQueryRequest.of(null);
 
 	}
 
@@ -144,7 +154,8 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		List<Hit<Object>> hits = new ArrayList<Hit<Object>>();
 		try
 		{
-			// String queryString1 = " \"Created\"=\"2023-11-08\" ";
+			// String queryString1 = " \"DMS_Content_ID\"=1000018 OR \"DMS_Content_ID\"=1000018 OR
+			// \"DMS_Content_ID\"=1000021 ";
 			// " \"Show_InActive\"=false AND \"AD_Client_ID\"=11 AND \"DMS_Content_ID\" IN (1000021
 			// , 1000020, 1000018) AND \"Show_InActive\"=false "));
 
@@ -257,9 +268,17 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	{
 		log.log(Level.INFO, "Elastic index creation data = " + indexData.toString());
 
+		// Check server is up and running
 		checkServerIsUp();
 
-		// Map data convert to JSon format
+		// For Date and Timestamp object value apply with specific formatter
+		for (Entry<String, Object> data : indexData.entrySet())
+		{
+			if (data.getValue() instanceof Date || data.getValue() instanceof Timestamp)
+				data.setValue(SDF_DATE_FORMAT_WITH_TIME.format(data.getValue()));
+		}
+
+		// Map data convert to JSON format
 		JSONObject jsonObject = new JSONObject(indexData);
 		String orgJsonData = jsonObject.toString();
 
@@ -269,7 +288,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 			IndexRequest<JsonData> req = IndexRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
 																.withJson(input));
 			IndexResponse response = esClient.index(req);
-			log.log(Level.INFO, "Elastic index created : " + response.toString());
+			log.log(Level.INFO, "Elastic index result : " + response.result() + ", response = " + response.toString());
 		}
 		catch (co.elastic.clients.elasticsearch._types.ElasticsearchException | IOException e)
 		{
