@@ -25,7 +25,7 @@ import com.logilite.search.model.MIndexingConfig;
 
 public class ServiceUtils
 {
-	static CCache<Integer, IIndexSearcher>	cache_indexSearcher	= new CCache<Integer, IIndexSearcher>("IndexSearcher", 2);
+	static CCache<Integer, IIndexSearcher> cache_indexSearcher = new CCache<Integer, IIndexSearcher>("IndexSearcher", 2);
 
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
 	{
@@ -46,7 +46,7 @@ public class ServiceUtils
 		}
 		else
 		{
-			throw new AdempiereException("Index Server Not Found on Client Info");
+			throw new AdempiereException("Missing to configure Index Server in Client Info");
 		}
 
 		// Factory call

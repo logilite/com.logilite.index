@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for LTX_Indexing_Conf
  *  @author iDempiere (generated) 
- *  @version Release 2.1
+ *  @version Release 7.1
  */
 @SuppressWarnings("all")
 public interface I_LTX_Indexing_Conf 
@@ -32,7 +32,7 @@ public interface I_LTX_Indexing_Conf
     /** TableName=LTX_Indexing_Conf */
     public static final String Table_Name = "LTX_Indexing_Conf";
 
-    /** AD_Table_ID=1000148 */
+    /** AD_Table_ID=1000031 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
