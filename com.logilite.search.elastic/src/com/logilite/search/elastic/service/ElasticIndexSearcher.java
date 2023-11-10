@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -24,6 +26,9 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.sql.TranslateResponse;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -132,7 +137,71 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public Object searchIndexNoRestriction(String queryString)
 	{
-		return null;
+		log.log(Level.INFO, "Elastic search query = " + queryString);
+
+		checkServerIsUp();
+
+		List<Hit<Object>> hits = new ArrayList<Hit<Object>>();
+		try
+		{
+			// String queryString1 = " \"Created\"=\"2023-11-08\" ";
+			// " \"Show_InActive\"=false AND \"AD_Client_ID\"=11 AND \"DMS_Content_ID\" IN (1000021
+			// , 1000020, 1000018) AND \"Show_InActive\"=false "));
+
+			String selectString = "SELECT * FROM \"" + indexingConfig.getLTX_Indexing_Core() + "\" WHERE ";
+
+			TranslateResponse translateResponse = esClient	.sql()
+															.translate(tr -> tr.query(selectString + queryString));
+
+			SearchResponse<Object> response = esClient.search(	sr -> sr
+																		.index(indexingConfig.getLTX_Indexing_Core())
+																		.query(translateResponse.query())
+																		.size(translateResponse.size().intValue()),
+																Object.class);
+
+			System.out.println(	"Query =>> "	+ translateResponse.query()
+								+ "\n response =>> " + response);
+			hits = response.hits().hits();
+		}
+		catch (ElasticsearchException e1)
+		{
+			e1.printStackTrace();
+		}
+		catch (IOException e1)
+		{
+			e1.printStackTrace();
+		}
+
+		// Below code working fine
+		/*
+		 * SearchResponse<Object> response;
+		 * try
+		 * {
+		 * String matchAllQuery = Base64 .getEncoder()
+		 * .encodeToString(("{\"match\":{ \"Show_InActive\":false }}").getBytes(StandardCharsets.
+		 * UTF_8));
+		 * response = esClient.search( sr -> sr.index(indexingConfig.getLTX_Indexing_Core())
+		 * .query(q -> q.wrapper(wq -> wq.query(matchAllQuery))),
+		 * Object.class);
+		 * hits = response.hits().hits();
+		 * // if (response.hits().total().value() > 0)
+		 * // {
+		 * // // System.out.println(response.hits().hits().forEach(null));
+		 * // }
+		 * // assertEquals(1, hits.size());
+		 * // assertEquals("John Doe", hits.get(0).source());
+		 * }
+		 * catch (MissingRequiredPropertyException e)
+		 * {
+		 * System.out.println("Missing required property: " + e.getPropertyName());
+		 * }
+		 * catch (ElasticsearchException | IOException e)
+		 * {
+		 * e.printStackTrace();
+		 * }
+		 */
+
+		return hits;
 	}
 
 	@Override
@@ -144,6 +213,18 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public String searchIndexJson(String queryString, int maxRows)
 	{
+		System.out.println("Search queryString= " + queryString);
+		searchIndexNoRestriction(queryString);
+
+		// SearchResponse<?> searchResponse = esClient.search(s -> s
+		// .index(indexingConfig.getLTX_Indexing_Core())
+		// .query(q -> q
+		// .match(t -> t.withJson(queryString))
+		//// .field("fullName")
+		//// .query(queryString)))
+		// , Void.class);
+		//
+		// List<Hit<Void>> hits = searchResponse.hits().hits();
 		return null;
 	}
 
@@ -174,15 +255,13 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void indexContent(Map<String, Object> indexData)
 	{
-		checkServerIsUp();
+		log.log(Level.INFO, "Elastic index creation data = " + indexData.toString());
 
-		log.log(Level.INFO, "Elastic index creation value = " + indexData.toString());
+		checkServerIsUp();
 
 		// Map data convert to JSon format
 		JSONObject jsonObject = new JSONObject(indexData);
 		String orgJsonData = jsonObject.toString();
-
-		// System.out.println(orgJsonData);
 
 		try
 		{
@@ -190,16 +269,14 @@ public class ElasticIndexSearcher implements IIndexSearcher
 			IndexRequest<JsonData> req = IndexRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
 																.withJson(input));
 			IndexResponse response = esClient.index(req);
-
-			// System.out.println("result : " + response);
+			log.log(Level.INFO, "Elastic index created : " + response.toString());
 		}
 		catch (co.elastic.clients.elasticsearch._types.ElasticsearchException | IOException e)
 		{
-			log.log(Level.SEVERE, "Fail to create Indexing: ", e);
+			log.log(Level.SEVERE, "Fail to create Indexing: " + e.getLocalizedMessage(), e);
 			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
-
 		}
-	}
+	} // indexContent
 
 	@Override
 	public Object getColumnValue(String query, String columnName)
@@ -228,7 +305,16 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public HashSet<Integer> searchIndex(String query, String searchFieldName)
 	{
-		return null;
-	}
+		HashSet<Integer> set = new HashSet<Integer>();
 
+		@SuppressWarnings("unchecked")
+		List<Hit<Object>> hits = (List<Hit<Object>>) searchIndexNoRestriction(query);
+		for (int i = 0; i < hits.size(); i++)
+		{
+			Hit<Object> hit = hits.get(i);
+			set.add((Integer) ((LinkedHashMap<?, ?>) hit.source()).get(searchFieldName));
+			System.out.println(hit);
+		}
+		return set;
+	} // searchIndex
 }
