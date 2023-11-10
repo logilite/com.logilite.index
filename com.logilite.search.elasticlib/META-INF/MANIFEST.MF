@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ElasticLib
-Bundle-SymbolicName: com.logilite.search.elasticlib
-Bundle-Version: 7.1.0.qualifier
+Bundle-SymbolicName: com.logilite.search.elasticlib;singleton:=true
+Bundle-Version: 7.2.0.qualifier
 Export-Package: co.elastic.clients.elasticsearch,
  co.elastic.clients.elasticsearch._types,
  co.elastic.clients.elasticsearch._types.query_dsl,
