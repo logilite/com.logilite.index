@@ -28,6 +28,8 @@ import com.logilite.search.model.MIndexingConfig;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -50,9 +52,9 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	public static CLogger					log							= CLogger.getCLogger(ElasticIndexSearcher.class);
 
 	public static final SimpleDateFormat	SDF_DATE_FORMAT_WITH_TIME	= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-
+	//
 	private MIndexingConfig					indexingConfig				= null;
-
+	//
 	private ElasticsearchClient				esClient					= null;
 
 	@Override
@@ -62,7 +64,6 @@ public class ElasticIndexSearcher implements IIndexSearcher
 
 		String serverUrl = indexingConfig.getURL();
 		String apiKey = indexingConfig.getPassword();
-		// "ak1reGdJc0IwcURiX3JjS18zdE06UWZYYkdvVzhUaWF0cmR4bXdXaFlPUQ==";
 
 		// final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
 		// credentialsProvider.setCredentials(AuthScope.ANY,
@@ -74,35 +75,25 @@ public class ElasticIndexSearcher implements IIndexSearcher
 
 		ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
 		esClient = new ElasticsearchClient(transport);
-		System.out.println(esClient);
 		try
 		{
 			BooleanResponse result = esClient.ping();
 			System.out.println("test " + result);
-			// TODO
-			// esclient.execute(null, null);
-			// esclient.ping();
 		}
-		catch (ElasticsearchException e)
+		catch (ElasticsearchException | IOException e)
 		{
-			log.log(Level.SEVERE, "Elastic server is not started: ", e);
+			log.log(Level.SEVERE, "Elastic server is not started: " + e.getLocalizedMessage(), e);
 		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-	}
+	} // init
 
 	@Override
 	public void createFieldTypeInIndexSchema(Map<String, Object> fieldTypeAttribute)
 	{
-
 	}
 
 	@Override
 	public void createFieldsInIndexSchema(Map<String, Object> fieldAttribute)
 	{
-
 	}
 
 	/**
@@ -119,7 +110,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
+			log.log(Level.SEVERE, "Fail to ping solr Server, Error: " + e.getLocalizedMessage(), e);
 			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
 		}
 	} // checkServerIsUp
@@ -127,22 +118,40 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void deleteAllIndex()
 	{
-		// DeleteByQueryRequest
-		// DeleteByQueryRequest req = DeleteByQueryRequest.of(null);
-
+		// TODO _all OR * as query call
+		// deleteIndexByQuery("\"DMS_Content_ID\"=1000021");
 	}
 
 	@Override
 	public void deleteIndexByField(String fieldName, String fieldValue)
 	{
-
-	}
+		deleteIndexByQuery("\"+fieldName +\" =" + fieldValue);
+	} // deleteIndexByField
 
 	@Override
 	public void deleteIndexByQuery(String query)
 	{
+		log.log(Level.INFO, "Elastic search query for delete = " + query);
 
-	}
+		checkServerIsUp();
+
+		String select = "SELECT * FROM \"" + indexingConfig.getLTX_Indexing_Core() + "\" WHERE ";
+		try
+		{
+			TranslateResponse translateResponse = esClient	.sql()
+															.translate(tr -> tr.query(select + query));
+
+			DeleteByQueryRequest req = DeleteByQueryRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
+																		.query(translateResponse.query()));
+			DeleteByQueryResponse response = esClient.deleteByQuery(req);
+
+			log.log(Level.INFO, "Index deleted counts= " + response.deleted() + ", query = " + query);
+		}
+		catch (ElasticsearchException | IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to delete index by query, Error: " + e.getLocalizedMessage(), e);
+		}
+	} // deleteIndexByQuery
 
 	@Override
 	public Object searchIndexNoRestriction(String queryString)
