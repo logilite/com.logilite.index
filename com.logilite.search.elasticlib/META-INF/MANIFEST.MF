@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: ElasticLib
-Bundle-SymbolicName: com.logilite.search.elasticlib;singleton:=true
+Bundle-SymbolicName: com.logilite.search.elasticlib
 Bundle-Version: 7.1.0.qualifier
 Export-Package: co.elastic.clients.elasticsearch,
  co.elastic.clients.elasticsearch._types,
@@ -22,7 +22,6 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="7.1.0",
  org.apache.httpcomponents.httpcore;bundle-version="4.4.9"
 Bundle-Vendor: LOGILITE
 Automatic-Module-Name: com.logilite.search.elasticlib
-Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: lib/elasticsearch-java-8.10.4.jar,
  lib/elasticsearch-rest-client-8.10.4.jar,
  lib/httpasyncclient-4.1.5.jar,
