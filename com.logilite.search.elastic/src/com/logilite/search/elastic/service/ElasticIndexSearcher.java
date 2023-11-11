@@ -21,6 +21,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
 import org.elasticsearch.client.RestClient;
 import org.json.JSONObject;
 
@@ -29,8 +30,8 @@ import com.logilite.search.model.MIndexingConfig;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
+import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -124,37 +125,70 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public void deleteAllIndex()
 	{
-		// TODO Next Phase
-		// TODO _all OR * as query call
-		// deleteIndexByQuery("\"DMS_Content_ID\"=1000021");
-	}
+		deleteIndexByQuery("\"DMS_Content_ID\" > 0");
+	} // deleteAllIndex
 
 	@Override
 	public void deleteIndexByField(String fieldName, String fieldValue)
 	{
-		deleteIndexByQuery("\"" + fieldName + "\" =" + fieldValue);
+		deleteIndexByQuery("\"" + fieldName + "\"=" + fieldValue);
 	} // deleteIndexByField
 
 	@Override
 	public void deleteIndexByQuery(String query)
 	{
-		log.log(Level.INFO, "Elastic search query for delete = " + query);
+		// From Reset index process delete all request
+		if (query.contains("BETWEEN '*' AND '*'"))
+		{
+			deleteAllIndex();
+			return;
+		}
 
-		checkServerIsUp();
-
+		// Delete indexed content
 		try
 		{
-			TranslateResponse translateResponse = translateQueryToELJson(query);
-			DeleteByQueryRequest req = DeleteByQueryRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
-																		.query(translateResponse.query()));
-			DeleteByQueryResponse response = esClient.deleteByQuery(req);
+			// Step 1: Fetch all the documents
+			@SuppressWarnings("unchecked")
+			List<Hit<Object>> hits = (List<Hit<Object>>) searchIndexNoRestriction(query);
 
-			log.log(Level.INFO, "Index deleted counts= " + response.deleted() + ", query = " + query);
+			// Step 2: Delete each document by its ID
+			for (Hit<?> hit : hits)
+			{
+				if (!Util.isEmpty(hit.id()))
+				{
+					DeleteRequest deleteRequest = DeleteRequest.of(i -> i	.index(indexingConfig.getLTX_Indexing_Core())
+																			.id(hit.id()));
+					DeleteResponse deleteResponse = esClient.delete(deleteRequest);
+					log.log(Level.INFO, "Delete index id= " + hit.id() + ", result= " + deleteResponse.result() + ", " + deleteResponse);
+					System.out.println("Delete index id= " + hit.id() + ", result= " + deleteResponse.result() + ", " + deleteResponse);
+				}
+			}
 		}
-		catch (ElasticsearchException | IOException e)
+		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "Fail to delete index by query, Error: " + e.getLocalizedMessage(), e);
+			log.log(Level.SEVERE, "Failed to delete all the index, Error: " + e.getLocalizedMessage(), e);
 		}
+
+		// log.log(Level.INFO, "Elastic search query for delete = " + query);
+		//
+		// checkServerIsUp();
+		//
+		// try
+		// {
+		// TranslateResponse translateResponse = translateQueryToELJson(query);
+		// DeleteByQueryRequest req = DeleteByQueryRequest.of(i -> i
+		// .index(indexingConfig.getLTX_Indexing_Core())
+		// .query(translateResponse.query()));
+		// DeleteByQueryResponse response = esClient.deleteByQuery(req);
+		//
+		// log.log(Level.INFO, "Index deleted counts= " + response.deleted() + ", query = " +
+		// query);
+		// }
+		// catch (ElasticsearchException | IOException e)
+		// {
+		// log.log(Level.SEVERE, "Fail to delete index by query, Error: " + e.getLocalizedMessage(),
+		// e);
+		// }
 	} // deleteIndexByQuery
 
 	@Override
