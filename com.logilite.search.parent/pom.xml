@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.logilite.search</groupId>
   <artifactId>com.logilite.search.parent</artifactId>
-  <version>$(revision)</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
 	<revision>7.2.0-SNAPSHOT</revision>
