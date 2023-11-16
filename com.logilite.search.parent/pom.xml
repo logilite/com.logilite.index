@@ -4,8 +4,9 @@
   <artifactId>com.logilite.search.parent</artifactId>
   <version>${revision}</version>
   <packaging>pom</packaging>
+
   <properties>
-	<revision>9.0.0-SNAPSHOT</revision>
+    <revision>9.1.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
     <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
@@ -21,6 +22,7 @@
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
   </properties>
+
   <build>
     <plugins>
       <plugin>
