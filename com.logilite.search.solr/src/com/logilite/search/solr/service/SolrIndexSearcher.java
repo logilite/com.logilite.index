@@ -13,7 +13,6 @@
 
 package com.logilite.search.solr.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +62,6 @@ import org.compiere.util.CLogger;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
-import com.logilite.search.solr.tika.FileContentParsingThroughTika;
 
 public class SolrIndexSearcher implements IIndexSearcher
 {
@@ -652,15 +650,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 		} // process
 
 	} // PreemptiveAuthInterceptor class
-
-	/**
-	 * File content parsing through Apache Tika
-	 */
-
-	public String getParseDocumentContent(File file)
-	{
-		return new FileContentParsingThroughTika(file).getParsedDocumentContent();
-	} // getParseDocumentContent
 
 	/**
 	 * From query to search result based on field name
