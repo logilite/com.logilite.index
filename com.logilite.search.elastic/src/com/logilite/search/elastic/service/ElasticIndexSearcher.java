@@ -1,6 +1,5 @@
 package com.logilite.search.elastic.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -40,7 +39,6 @@ import co.elastic.clients.elasticsearch.sql.TranslateResponse;
 import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.endpoints.BooleanResponse;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 
 /**
@@ -81,16 +79,9 @@ public class ElasticIndexSearcher implements IIndexSearcher
 											.build();
 
 		ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+
 		esClient = new ElasticsearchClient(transport);
-		try
-		{
-			BooleanResponse result = esClient.ping();
-			System.out.println("test " + result);
-		}
-		catch (ElasticsearchException | IOException e)
-		{
-			log.log(Level.SEVERE, "Elastic server is not started: " + e.getLocalizedMessage(), e);
-		}
+
 	} // init
 
 	@Override
@@ -117,8 +108,8 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "Fail to ping solr Server, Error: " + e.getLocalizedMessage(), e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
+			log.log(Level.SEVERE, "Fail to ping Elastic Server, Error: " + e.getLocalizedMessage(), e);
+			throw new AdempiereException("Fail to ping Elastic Server: " + e.getLocalizedMessage(), e);
 		}
 	} // checkServerIsUp
 
@@ -160,7 +151,6 @@ public class ElasticIndexSearcher implements IIndexSearcher
 																			.id(hit.id()));
 					DeleteResponse deleteResponse = esClient.delete(deleteRequest);
 					log.log(Level.INFO, "Delete index id= " + hit.id() + ", result= " + deleteResponse.result() + ", " + deleteResponse);
-					System.out.println("Delete index id= " + hit.id() + ", result= " + deleteResponse.result() + ", " + deleteResponse);
 				}
 			}
 		}
@@ -295,8 +285,8 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	@Override
 	public List<Object> searchIndexDocument(String queryString, int maxRow)
 	{
-		// TODO Next Phase
-		return null;
+		// TODO Need to Test 1st
+		return (List<Object>) searchIndexNoRestriction(queryString + " LIMIT " + maxRow);
 	}
 
 	@Override
@@ -359,13 +349,6 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	}
 
 	@Override
-	public String getParseDocumentContent(File file)
-	{
-		// TODO Next Phase
-		return null;
-	}
-
-	@Override
 	public HashSet<Integer> searchIndex(String query, String searchFieldName)
 	{
 		HashSet<Integer> set = new HashSet<Integer>();
@@ -376,7 +359,6 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		{
 			Hit<Object> hit = hits.get(i);
 			set.add((Integer) ((LinkedHashMap<?, ?>) hit.source()).get(searchFieldName));
-			System.out.println(hit);
 		}
 		return set;
 	} // searchIndex
