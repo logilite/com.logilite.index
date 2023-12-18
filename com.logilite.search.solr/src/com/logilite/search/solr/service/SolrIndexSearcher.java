@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -60,6 +59,7 @@ import org.apache.solr.common.util.NamedList;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 
+import com.logilite.search.exception.IndexException;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
 
@@ -119,23 +119,23 @@ public class SolrIndexSearcher implements IIndexSearcher
 			catch (Exception e)
 			{
 				log.log(Level.SEVERE, "Issue while build/create fieldtype/field in solr schema: ", e.getLocalizedMessage());
-				throw new AdempiereException("Issue while build/create fieldtype/field in solr schema: " + e.getLocalizedMessage(), e);
+				throw new IndexException("Issue while build/create fieldtype/field in solr schema: " + e.getLocalizedMessage(), e);
 			}
 		}
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server is not started: ", e);
-			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr server is not started: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Fail to initialize solr Server OR Invalid Username or Password ", e);
-			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password.", e);
+			throw new IndexException("Fail to initialize solr Server OR Invalid Username or Password.", e);
 		}
 	} // init
 
@@ -158,12 +158,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server is not started: ", e);
-			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr server is not started: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to retried fields set: ", e);
-			throw new AdempiereException("Fail to retried fields set: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to retried fields set: " + e.getLocalizedMessage(), e);
 		}
 
 	} // buildSolrSchemaFieldsSet
@@ -188,12 +188,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server is not started: ", e);
-			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr server is not started: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to retried field types: ", e);
-			throw new AdempiereException("Fail to retried field type: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to retried field type: " + e.getLocalizedMessage(), e);
 		}
 	} // buildSolrSchemaFieldTypesSet
 
@@ -217,12 +217,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 			catch (SolrServerException e)
 			{
 				log.log(Level.SEVERE, "Solr server is not started: ", e);
-				throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+				throw new IndexException("Solr server is not started: " + e.getLocalizedMessage(), e);
 			}
 			catch (IOException e)
 			{
 				log.log(Level.SEVERE, "Fail to add field type for : " + fieldTypeAttribute.toString(), e);
-				throw new AdempiereException("Fail to add field type for : " + fieldTypeAttribute.toString() + ", Error: " + e.getLocalizedMessage(), e);
+				throw new IndexException("Fail to add field type for : " + fieldTypeAttribute.toString() + ", Error: " + e.getLocalizedMessage(), e);
 			}
 
 			//
@@ -247,12 +247,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 			catch (SolrServerException e)
 			{
 				log.log(Level.SEVERE, "Solr server is not started: ", e);
-				throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
+				throw new IndexException("Solr server is not started: " + e.getLocalizedMessage(), e);
 			}
 			catch (IOException e)
 			{
 				log.log(Level.SEVERE, "Fail to add field in schema for : " + fieldAttribute.toString(), e);
-				throw new AdempiereException("Fail to add field in schema for : " + fieldAttribute.toString() + ", Error: " + e.getLocalizedMessage(), e);
+				throw new IndexException("Fail to add field in schema for : " + fieldAttribute.toString() + ", Error: " + e.getLocalizedMessage(), e);
 			}
 
 			//
@@ -263,9 +263,9 @@ public class SolrIndexSearcher implements IIndexSearcher
 	/**
 	 * Check Server is Up and running
 	 * 
-	 * @throws AdempiereException
+	 * @throws IndexException
 	 */
-	public void checkServerIsUp() throws AdempiereException
+	public void checkServerIsUp() throws IndexException
 	{
 		try
 		{
@@ -275,7 +275,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException | IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
 		}
 	} // checkServerIsUp
 
@@ -322,7 +322,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 		try
 		{
-			log.log(Level.INFO, "Solr index creation value = " + document.toString());
+			log.log(Level.INFO, "Solr index creation value as per Document object = " + document.toString());
 
 			server.add(document);
 			server.commit();
@@ -330,7 +330,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Fail to create Indexing: ", e);
-			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
 		}
 
 		if (isReBuildFieldSet)
@@ -365,12 +365,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server connection failure, Query=" + query, e);
-			throw new AdempiereException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Solr document delete failure, Query=" + query, e);
-			throw new AdempiereException("Solr document delete failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr document delete failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 	} // deleteIndexByQuery
 
@@ -395,17 +395,17 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server connection failure, Query=" + query, e);
-			throw new AdempiereException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Solr document searching failed, Query=" + query, e);
-			throw new AdempiereException("Solr document searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr document searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Solr searching failed, Query=" + query, e);
-			throw new AdempiereException("Solr searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
+			throw new IndexException("Solr searching failed, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 
 		return documents;
@@ -487,12 +487,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server connection failure: ", e);
-			throw new AdempiereException("Solr server connection failure:  " + e.getLocalizedMessage());
+			throw new IndexException("Solr server connection failure:  " + e.getLocalizedMessage());
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Solr Document(s) fetching failure: ", e);
-			throw new AdempiereException("Solr Document(s) fetching failure:  " + e.getLocalizedMessage());
+			throw new IndexException("Solr Document(s) fetching failure:  " + e.getLocalizedMessage());
 		}
 		return (String) resp.get("response");
 	} // searchIndexJson
