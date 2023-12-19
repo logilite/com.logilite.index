@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
@@ -24,6 +23,7 @@ import org.compiere.util.Util;
 import org.elasticsearch.client.RestClient;
 import org.json.JSONObject;
 
+import com.logilite.search.exception.IndexException;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.model.MIndexingConfig;
 
@@ -97,9 +97,9 @@ public class ElasticIndexSearcher implements IIndexSearcher
 	/**
 	 * Check Server is Up and running
 	 * 
-	 * @throws AdempiereException
+	 * @throws IndexingException
 	 */
-	public void checkServerIsUp() throws AdempiereException
+	public void checkServerIsUp() throws IndexException
 	{
 		try
 		{
@@ -109,7 +109,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to ping Elastic Server, Error: " + e.getLocalizedMessage(), e);
-			throw new AdempiereException("Fail to ping Elastic Server: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to ping Elastic Server: " + e.getLocalizedMessage(), e);
 		}
 	} // checkServerIsUp
 
@@ -319,7 +319,7 @@ public class ElasticIndexSearcher implements IIndexSearcher
 		catch (co.elastic.clients.elasticsearch._types.ElasticsearchException | IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to create Indexing: " + e.getLocalizedMessage(), e);
-			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
+			throw new IndexException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
 		}
 	} // indexContent
 
