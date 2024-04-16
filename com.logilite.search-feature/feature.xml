@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.search.feature"
       label="search-feature"
-      version="9.1.0.qualifier"
+      version="9.2.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
