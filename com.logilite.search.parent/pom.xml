@@ -17,7 +17,7 @@
     <idempiere.repo>${local.idempiere.sb}</idempiere.repo>
 
     <download.maven.version>1.4.1</download.maven.version>
-    <tycho.version>2.7.3</tycho.version>
+    <tycho.version>4.0.4</tycho.version>
     <idempiere.repo-id>iDempiere9</idempiere.repo-id>
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
@@ -91,8 +91,8 @@
                   <arch>x86_64</arch>
                 </environment>
               </environments>
-              <executionEnvironmentDefault>JavaSE-11</executionEnvironmentDefault>
-              <executionEnvironment>JavaSE-11</executionEnvironment>
+              <executionEnvironmentDefault>JavaSE-17</executionEnvironmentDefault>
+              <executionEnvironment>JavaSE-17</executionEnvironment>
             </configuration>
           </plugin>
         </plugins>
