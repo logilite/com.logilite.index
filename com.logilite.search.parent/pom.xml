@@ -6,7 +6,7 @@
   <packaging>pom</packaging>
 
   <properties>
-    <revision>9.2.0-SNAPSHOT</revision>
+    <revision>11.2.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
     <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
